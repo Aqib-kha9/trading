@@ -14,6 +14,7 @@ const UserTable = ({ users, onAction }) => {
                     <thead className="bg-muted/50 sticky top-0 z-10 uppercase tracking-widest text-[9px] font-bold text-muted-foreground border-b border-border shadow-sm backdrop-blur-md">
                         <tr>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Client ID</th>
+                            <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">IP Address</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Name / Contact</th>
                             <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Fund (Equity)</th>
                             <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Margin Used</th>
@@ -34,6 +35,9 @@ const UserTable = ({ users, onAction }) => {
                                     <td className="px-5 py-3 text-primary font-bold tracking-tight border-r border-white/5 relative">
                                         <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary/0 group-hover:bg-primary transition-colors"></div>
                                         {user.clientId}
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-white/5 font-mono text-[10px] text-muted-foreground">
+                                        {user.ip || '—'}
                                     </td>
                                     <td className="px-5 py-3 border-r border-white/5 font-sans">
                                         <div className="flex flex-col">

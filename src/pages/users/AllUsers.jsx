@@ -7,11 +7,11 @@ import Button from '../../components/ui/Button';
 
 // Mock Data for "Master Stroke" testing
 const MOCK_USERS = [
-    { id: 1, clientId: 'MS-1001', name: 'Rajesh Kumar', email: 'rajesh@example.com', equity: 150000, marginUsed: 45000, pnl: 12500, plan: 'Gold', status: 'Active' },
-    { id: 2, clientId: 'MS-1002', name: 'Amit Singh', email: 'amit@example.com', equity: 5000, marginUsed: 80000, pnl: -12000, plan: 'Silver', status: 'Liquidated' }, // Liquidated (Equity < 20% of Margin)
-    { id: 3, clientId: 'MS-1003', name: 'Sneha Gupta', email: 'sneha@example.com', equity: 500000, marginUsed: 120000, pnl: 45000, plan: 'Platinum', status: 'Active' },
-    { id: 4, clientId: 'MS-1004', name: 'Vikram Malhotra', email: 'vikram@example.com', equity: 25000, marginUsed: 0, pnl: 0, plan: 'Demo', status: 'Blocked' },
-    { id: 5, clientId: 'MS-1005', name: 'Priya Sharma', email: 'priya@example.com', equity: 75000, marginUsed: 70000, pnl: -5000, plan: 'Gold', status: 'Active' },
+    { id: 1, clientId: 'MS-1001', name: 'Rajesh Kumar', email: 'rajesh@example.com', ip: '192.168.1.101', equity: 150000, marginUsed: 45000, pnl: 12500, plan: 'Options Segment', status: 'Active' },
+    { id: 2, clientId: 'MS-1002', name: 'Amit Singh', email: 'amit@example.com', ip: '10.0.0.55', equity: 5000, marginUsed: 80000, pnl: -12000, plan: 'Forex Segment', status: 'Liquidated' }, // Liquidated (Equity < 20% of Margin)
+    { id: 3, clientId: 'MS-1003', name: 'Sneha Gupta', email: 'sneha@example.com', ip: '172.16.0.23', equity: 500000, marginUsed: 120000, pnl: 45000, plan: 'NFT Segment', status: 'Active' },
+    { id: 4, clientId: 'MS-1004', name: 'Vikram Malhotra', email: 'vikram@example.com', ip: '192.168.0.12', equity: 25000, marginUsed: 0, pnl: 0, plan: 'Free Demo Trial', status: 'Blocked' },
+    { id: 5, clientId: 'MS-1005', name: 'Priya Sharma', email: 'priya@example.com', ip: '192.168.1.105', equity: 75000, marginUsed: 70000, pnl: -5000, plan: 'Comodity Segment', status: 'Active' },
 ];
 
 const UsersList = () => {

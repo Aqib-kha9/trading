@@ -12,7 +12,6 @@ const schema = yup.object({
     type: yup.string().oneOf(['BUY', 'SELL']).required('Type is required'),
     entry: yup.number().required('Entry price is required'),
     stoploss: yup.number().required('Stoploss is required'),
-    target: yup.number().required('Target is required'),
 }).required();
 
 const CreateSignal = () => {
@@ -52,10 +51,10 @@ const CreateSignal = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 gap-6">
                         <Input label="Entry Price" type="number" step="0.01" {...register('entry')} error={errors.entry?.message} />
                         <Input label="Stop Loss" type="number" step="0.01" {...register('stoploss')} error={errors.stoploss?.message} />
-                        <Input label="Target" type="number" step="0.01" {...register('target')} error={errors.target?.message} />
+                        {/* Target input removed */}
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">

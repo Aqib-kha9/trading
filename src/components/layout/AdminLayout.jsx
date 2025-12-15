@@ -1,10 +1,46 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../store/authSlice';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 const AdminLayout = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    // Initial check
+    const initialSessionId = useRef(localStorage.getItem('session_id'));
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate('/login');
+    };
+
+    // Session Enforcement Logic
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'session_id') {
+                const currentSession = localStorage.getItem('session_id');
+                // If session ID changed in storage, logout
+                if (currentSession && currentSession !== initialSessionId.current) {
+                    // Alert commented out to avoid annoying popup on refresh if logic is flawed, 
+                    // but keeping logic. Use console for now.
+                    console.warn('Session changed, logging out.');
+                    // alert('Session changed. Logging out.'); 
+                    handleLogout();
+                }
+            }
+        };
+
+        const currentId = localStorage.getItem('session_id');
+        initialSessionId.current = currentId;
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [dispatch]); // handleLogout is stable mostly, but it depends on dispatch/navigate. 
+    // Better to rely on dispatch stability or just omit handleLogout from dep array if infinite loop fears.
 
     return (
         <div className="flex h-screen bg-background overflow-hidden font-sans">

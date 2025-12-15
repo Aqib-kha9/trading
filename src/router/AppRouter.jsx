@@ -55,8 +55,10 @@ import CreateFAQ from '../pages/cms/CreateFAQ';
 // Announcements
 import AllAnnouncements from '../pages/announcements/AllAnnouncements';
 import CreateAnnouncement from '../pages/announcements/CreateAnnouncement';
+import Calendar from '../pages/announcements/Calendar';
 
-// Reports
+import MarketData from '../pages/market/MarketData';
+
 import Reports from '../pages/reports/Reports';
 
 const ProtectedRoute = ({ children }) => {
@@ -117,6 +119,8 @@ const AppRouter = () => {
                     <Route path="market/symbols" element={<ManageSymbols />} />
                     <Route path="market/add" element={<AddSymbol />} />
                     <Route path="market/edit" element={<EditSymbol />} />
+                    <Route path="market/data" element={<MarketData />} />
+
 
                     {/* Support / Tickets */}
                     <Route path="tickets/all" element={<AllTickets />} />
@@ -134,6 +138,7 @@ const AppRouter = () => {
                     {/* Announcements */}
                     <Route path="announcements/all" element={<AllAnnouncements />} />
                     <Route path="announcements/create" element={<CreateAnnouncement />} />
+                    <Route path="announcements/calendar" element={<Calendar />} />
 
                     {/* Reports */}
                     <Route path="reports/all" element={<Reports />} />

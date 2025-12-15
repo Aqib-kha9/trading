@@ -7,11 +7,11 @@ import { clsx } from 'clsx';
 
 // Mock Data
 const MOCK_TICKETS = [
-    { id: 'TKT-2024', subject: 'Payment Failed for Premium Plan', category: 'Billing', user: 'Rahul Sharma', priority: 'High', status: 'Open', date: '2024-01-12' },
-    { id: 'TKT-2023', subject: 'Login Issue on Mobile', category: 'Tech Support', user: 'Amit Verma', priority: 'Medium', status: 'Open', date: '2024-01-12' },
-    { id: 'TKT-2022', subject: 'How to change password?', category: 'Account', user: 'Sneha Gupta', priority: 'Low', status: 'Resolved', date: '2024-01-11' },
-    { id: 'TKT-2021', subject: 'Signal not received', category: 'Signals', user: 'Vikram Singh', priority: 'High', status: 'Resolved', date: '2024-01-10' },
-    { id: 'TKT-2020', subject: 'Refund Request', category: 'Billing', user: 'Pooja Patel', priority: 'High', status: 'Open', date: '2024-01-09' },
+    { id: 'TKT-2024', subject: 'Payment Failed for Premium Plan', category: 'Billing', user: 'Rahul Sharma', ipAddress: '192.168.1.10', priority: 'High', status: 'Open', date: '2024-01-12' },
+    { id: 'TKT-2023', subject: 'Login Issue on Mobile', category: 'Tech Support', user: 'Amit Verma', ipAddress: '110.22.45.12', priority: 'Medium', status: 'Open', date: '2024-01-12' },
+    { id: 'TKT-2022', subject: 'How to change password?', category: 'Account', user: 'Sneha Gupta', ipAddress: '172.16.0.5', priority: 'Low', status: 'Resolved', date: '2024-01-11' },
+    { id: 'TKT-2021', subject: 'Signal not received', category: 'Signals', user: 'Vikram Singh', ipAddress: '203.0.113.8', priority: 'High', status: 'Resolved', date: '2024-01-10' },
+    { id: 'TKT-2020', subject: 'Refund Request', category: 'Billing', user: 'Pooja Patel', ipAddress: '198.51.100.2', priority: 'High', status: 'Open', date: '2024-01-09' },
 ];
 
 const AllTickets = () => {

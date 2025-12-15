@@ -4,7 +4,7 @@ import {
     LayoutDashboard, Users, CreditCard,
     BarChart2, Settings, FileText, X, AlignLeft,
     RefreshCcw, Radio, MessageSquare, Megaphone, PieChart,
-    ChevronLeft, ChevronRight, Activity, Command, Cpu, Wifi
+    ChevronLeft, ChevronRight, Activity, Command, Cpu, Wifi, Calendar
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -87,10 +87,24 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Plans', path: '/plans/all', icon: CreditCard },
         { name: 'Subscriptions', path: '/subscriptions/all', icon: RefreshCcw },
         { name: 'Signals', path: '/signals/all', icon: Radio },
-        { name: 'Market Data', path: '/market/symbols', icon: BarChart2 },
+        {
+            name: 'Market Data',
+            icon: BarChart2,
+            submenu: [
+                { name: 'Live Market', path: '/market/data', icon: Activity },
+                { name: 'Manage Symbols', path: '/market/symbols', icon: Settings }
+            ]
+        },
         { name: 'Support Tickets', path: '/tickets/all', icon: MessageSquare },
         { name: 'Reports', path: '/reports/all', icon: PieChart },
-        { name: 'Announcements', path: '/announcements/all', icon: Megaphone },
+        {
+            name: 'Announcements',
+            icon: Megaphone,
+            submenu: [
+                { name: 'All News', path: '/announcements/all', icon: Megaphone },
+                { name: 'Economic Calendar', path: '/announcements/calendar', icon: Calendar }
+            ]
+        },
         { name: 'CMS', path: '/cms/all', icon: FileText },
         { name: 'Settings', path: '/settings/all', icon: Settings },
     ];

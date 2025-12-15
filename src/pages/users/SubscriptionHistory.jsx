@@ -5,9 +5,9 @@ import Button from '../../components/ui/Button';
 
 const SubscriptionHistory = ({ isEmbedded = false }) => {
     const history = [
-        { id: 'SUB-101', plan: 'Gold Membership', amount: '₹4,999', date: '12 Jan 2024', status: 'Active' },
-        { id: 'SUB-098', plan: 'Silver Membership', amount: '₹2,499', date: '10 Dec 2023', status: 'Expired' },
-        { id: 'SUB-045', plan: 'Silver Membership', amount: '₹2,499', date: '08 Nov 2023', status: 'Expired' },
+        { id: 'SUB-101', plan: 'Options Segment', amount: '₹25,000', date: '12 Jan 2024', status: 'Active' },
+        { id: 'SUB-098', plan: 'Forex Segment', amount: '₹25,000', date: '10 Dec 2023', status: 'Expired' },
+        { id: 'SUB-045', plan: 'Forex Segment', amount: '₹25,000', date: '08 Nov 2023', status: 'Expired' },
     ];
 
     return (

@@ -7,6 +7,7 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { Lock, Mail, ShieldCheck } from 'lucide-react';
+import axios from 'axios';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -15,9 +16,29 @@ const Login = () => {
     const { loading, error } = useSelector((state) => state.auth);
 
     const onSubmit = async (data) => {
-        const result = await dispatch(login(data));
-        if (result.meta.requestStatus === 'fulfilled') {
-            navigate('/');
+        try {
+            // Fetch User IP
+            const ipResponse = await axios.get('https://api.ipify.org?format=json');
+            const userIp = ipResponse.data.ip;
+
+            // Generate Session ID
+            const sessionId = Date.now().toString();
+
+            // Store in LocalStorage (Mock Backend Session)
+            localStorage.setItem('user_ip', userIp);
+            localStorage.setItem('session_id', sessionId);
+
+            const result = await dispatch(login({ ...data, ip: userIp, sessionId }));
+            if (result.meta.requestStatus === 'fulfilled') {
+                navigate('/');
+            }
+        } catch (err) {
+            console.error("Login failed or IP fetch error", err);
+            // Proceed even if IP fetch fails (optional fallback)
+            const result = await dispatch(login(data));
+            if (result.meta.requestStatus === 'fulfilled') {
+                navigate('/');
+            }
         }
     };
 

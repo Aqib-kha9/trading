@@ -15,7 +15,7 @@ const SignalTable = ({ signals }) => {
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Signal Type</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Entry Price</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Stop Loss</th>
-                            <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Target</th>
+                            {/* Target column removed */}
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Status</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Time</th>
                             <th className="px-5 py-3 text-center bg-muted/90 backdrop-blur-sm">Actions</th>
@@ -44,13 +44,11 @@ const SignalTable = ({ signals }) => {
                                     <td className="px-5 py-3 text-center border-r border-border text-red-500 font-bold">
                                         {signal.stoploss}
                                     </td>
-                                    <td className="px-5 py-3 text-center border-r border-border text-emerald-500 font-bold">
-                                        {signal.target}
-                                    </td>
+                                    {/* Target cell removed */}
                                     <td className="px-5 py-3 text-center border-r border-border">
                                         <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider flex items-center justify-center gap-1.5 w-fit mx-auto ${signal.status === 'Active' ? 'border-blue-500/20 text-blue-500 bg-blue-500/5' :
-                                                signal.status === 'Target Hit' ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5' :
-                                                    'border-red-500/20 text-red-500 bg-red-500/5'
+                                            signal.status === 'Target Hit' ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5' :
+                                                'border-red-500/20 text-red-500 bg-red-500/5'
                                             }`}>
                                             {signal.status === 'Target Hit' && <Target size={10} />}
                                             {signal.status === 'Stoploss Hit' && <AlertTriangle size={10} />}

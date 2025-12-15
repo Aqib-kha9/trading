@@ -9,10 +9,12 @@ import { clsx } from 'clsx';
 
 // Mock Data for Plans
 const MOCK_PLANS = [
-    { id: 'PLN-001', name: 'Gold Membership', price: 4999, validity_days: 30, isDemo: false, features: ['Nifty 50 Signals', 'BankNifty Signals', 'Basic Support'] },
-    { id: 'PLN-002', name: 'Platinum Membership', price: 9999, validity_days: 90, isDemo: false, features: ['All Signals', 'Priority Support', 'Commodity Access', 'Webinar Access'] },
-    { id: 'PLN-003', name: 'Silver Membership', price: 2499, validity_days: 15, isDemo: false, features: ['Nifty 50 Signals Only'] },
-    { id: 'PLN-004', name: 'Free Demo Trial', price: 0, validity_days: 3, isDemo: true, features: ['Delayed Signals', 'App Access'] },
+    { id: 'PLN-001', name: 'NFT Segment', price: 25000, validity_days: 30, isDemo: false, features: ['NFT specific signals', 'Priority Support'] },
+    { id: 'PLN-002', name: 'Options Segment', price: 25000, validity_days: 30, isDemo: false, features: ['BankNifty/Nifty Options', 'Live Market Updates'] },
+    { id: 'PLN-003', name: 'Crypto Segment', price: 25000, validity_days: 30, isDemo: false, features: ['Major Crypto Pairs', '24/7 Alerts'] },
+    { id: 'PLN-004', name: 'Forex Segment', price: 25000, validity_days: 30, isDemo: false, features: ['Major Forex Pairs', 'News Events'] },
+    { id: 'PLN-005', name: 'Comodity Segment', price: 25000, validity_days: 30, isDemo: false, features: ['Gold & Silver', 'Crude Oil'] },
+    { id: 'PLN-006', name: 'Free Demo Trial', price: 0, validity_days: 3, isDemo: true, features: ['Delayed Signals', 'App Access'] },
 ];
 
 const AllPlans = () => {

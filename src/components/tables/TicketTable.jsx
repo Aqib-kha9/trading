@@ -31,6 +31,7 @@ const TicketTable = ({ tickets }) => {
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Ticket ID</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Subject</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">User</th>
+                            <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">IP Address</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Priority</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Status</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Date</th>
@@ -59,6 +60,9 @@ const TicketTable = ({ tickets }) => {
                                         <span className="text-foreground">{ticket.user}</span>
                                     </div>
                                 </td>
+                                <td className="px-5 py-3 border-r border-border font-mono text-muted-foreground">
+                                    {ticket.ipAddress || '-'}
+                                </td>
                                 <td className="px-5 py-3 text-center border-r border-border">
                                     <span className={clsx("px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider", getPriorityColor(ticket.priority))}>
                                         {ticket.priority}
@@ -83,7 +87,7 @@ const TicketTable = ({ tickets }) => {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </div >
     );
 };
 

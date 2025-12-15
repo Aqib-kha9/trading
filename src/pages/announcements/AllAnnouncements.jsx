@@ -7,6 +7,8 @@ import { clsx } from 'clsx';
 
 // Mock Data
 const MOCK_ANNOUNCEMENTS = [
+    { id: 'SYS-001', title: 'High Impact Alert: USD Core CPI m/m', message: 'System auto-alert: High impact event released. Data sent to paid subscriber terminals.', type: 'System', audience: 'Paid Users', status: 'Active', date: '2024-12-15' },
+    { id: 'SYS-002', title: 'High Impact Alert: CNY Retail Sales y/y', message: 'System auto-alert: Negative deviation detected. Short signals generated.', type: 'System', audience: 'Paid Users', status: 'Active', date: '2024-12-15' },
     { id: 'ANC-001', title: 'Market Holidary: Ganesh Chaturthi', message: 'Markets will remain closed on Tuesday.', type: 'Urgent', audience: 'All Users', status: 'Active', date: '2024-09-18' },
     { id: 'ANC-002', title: 'New Feature: Auto-Trade', message: 'Introducing automated trading bot for premium users.', type: 'Update', audience: 'Premium', status: 'Active', date: '2024-09-15' },
     { id: 'ANC-003', title: 'Webinar: Options Strategy', message: 'Join us live on Sunday at 10 AM.', type: 'Event', audience: 'All Users', status: 'Scheduled', date: '2024-09-22' },

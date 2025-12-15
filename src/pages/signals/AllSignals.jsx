@@ -8,16 +8,16 @@ import SignalConfiguration from './SignalConfiguration';
 
 // Mock Data
 const MOCK_SIGNALS = [
-    { id: 'SIG-1001', symbol: 'NIFTY 50', type: 'BUY', entry: '21500', stoploss: '21450', target: '21600', status: 'Active', timestamp: '2024-01-12T10:30:00' },
-    { id: 'SIG-1002', symbol: 'BANKNIFTY', type: 'SELL', entry: '47800', stoploss: '47900', target: '47500', status: 'Target Hit', timestamp: '2024-01-12T09:15:00' },
-    { id: 'SIG-1003', symbol: 'RELIANCE', type: 'BUY', entry: '2600', stoploss: '2580', target: '2640', status: 'Stoploss Hit', timestamp: '2024-01-11T14:20:00' },
-    { id: 'SIG-1004', symbol: 'HDFCBANK', type: 'BUY', entry: '1650', stoploss: '1640', target: '1680', status: 'Active', timestamp: '2024-01-12T11:00:00' },
+    { id: 'SIG-1001', symbol: 'NIFTY 50', type: 'BUY', entry: '21500', stoploss: '21450', status: 'Active', timestamp: '2024-01-12T10:30:00' },
+    { id: 'SIG-1002', symbol: 'BANKNIFTY', type: 'SELL', entry: '47800', stoploss: '47900', status: 'Active', timestamp: '2024-01-12T09:15:00' }, // Status changed from Target Hit to Active/Stoploss Hit as Target is gone
+    { id: 'SIG-1003', symbol: 'RELIANCE', type: 'BUY', entry: '2600', stoploss: '2580', status: 'Stoploss Hit', timestamp: '2024-01-11T14:20:00' },
+    { id: 'SIG-1004', symbol: 'HDFCBANK', type: 'BUY', entry: '1650', stoploss: '1640', status: 'Active', timestamp: '2024-01-12T11:00:00' },
 ];
 
 const MOCK_HISTORY = [
-    { id: 'SIG-0998', symbol: 'TATASTEEL', type: 'BUY', entry: '135', stoploss: '132', target: '140', status: 'Target Hit', timestamp: '2024-01-10T09:30:00' },
-    { id: 'SIG-0997', symbol: 'INFY', type: 'SELL', entry: '1520', stoploss: '1540', target: '1480', status: 'Stoploss Hit', timestamp: '2024-01-09T10:00:00' },
-    { id: 'SIG-0996', symbol: 'NIFTY 50', type: 'BUY', entry: '21400', stoploss: '21350', target: '21500', status: 'Target Hit', timestamp: '2024-01-08T11:45:00' },
+    { id: 'SIG-0998', symbol: 'TATASTEEL', type: 'BUY', entry: '135', stoploss: '132', status: 'Closed', timestamp: '2024-01-10T09:30:00' },
+    { id: 'SIG-0997', symbol: 'INFY', type: 'SELL', entry: '1520', stoploss: '1540', status: 'Stoploss Hit', timestamp: '2024-01-09T10:00:00' },
+    { id: 'SIG-0996', symbol: 'NIFTY 50', type: 'BUY', entry: '21400', stoploss: '21350', status: 'Closed', timestamp: '2024-01-08T11:45:00' },
 ];
 
 const AllSignals = () => {
