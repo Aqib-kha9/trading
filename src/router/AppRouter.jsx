@@ -61,6 +61,11 @@ import MarketData from '../pages/market/MarketData';
 
 import Reports from '../pages/reports/Reports';
 
+// Broker Management
+import AllBrokers from '../pages/brokers/AllBrokers';
+import AddBroker from '../pages/brokers/AddBroker';
+import BrokerDetails from '../pages/brokers/BrokerDetails';
+
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated } = useSelector((state) => state.auth);
     if (!isAuthenticated) {
@@ -142,6 +147,11 @@ const AppRouter = () => {
 
                     {/* Reports */}
                     <Route path="reports/all" element={<Reports />} />
+
+                    {/* Sub Brokers */}
+                    <Route path="brokers/all" element={<AllBrokers />} />
+                    <Route path="brokers/add" element={<AddBroker />} />
+                    <Route path="brokers/details" element={<BrokerDetails />} />
 
                     <Route path="*" element={<div className="text-white p-6">Page Not Found</div>} />
                 </Route>

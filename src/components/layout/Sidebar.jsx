@@ -106,6 +106,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             ]
         },
         { name: 'CMS', path: '/cms/all', icon: FileText },
+        { name: 'Sub Brokers', path: '/brokers/all', icon: Users }, // Reusing Users icon or similar
         { name: 'Settings', path: '/settings/all', icon: Settings },
     ];
 
