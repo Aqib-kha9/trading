@@ -8,19 +8,46 @@ import {
 import { clsx } from 'clsx';
 
 // --- Constants ---
-const THEME = {
-    up: '#089981',
-    down: '#f23645',
-    bg: '#0d1017',
-    grid: '#1e293b',
-    text: '#94a3b8',
-    crosshair: '#ffffff',
-    volumeUp: 'rgba(8, 153, 129, 0.5)',
-    volumeDown: 'rgba(242, 54, 69, 0.5)',
+const getThemeColors = () => {
+    const style = getComputedStyle(document.documentElement);
+
+    // Create a temporary element to resolve CSS variables to RGB
+    const temp = document.createElement('div');
+    temp.style.display = 'none';
+    document.body.appendChild(temp);
+
+    const resolve = (varName, fallback) => {
+        const val = style.getPropertyValue(varName).trim();
+        if (!val) return fallback;
+
+        // Handle Shadcn HSL channels (e.g. "215 20% 65%")
+        let cssColor = val;
+        if (!val.startsWith('#') && !val.startsWith('rgb') && !val.startsWith('hsl')) {
+            cssColor = `hsl(${val})`;
+        }
+
+        temp.style.color = cssColor;
+        // Force browser to compute the rgb value
+        const computed = getComputedStyle(temp).color;
+        // If computation fails (invalid color), return fallback
+        return computed !== '' ? computed : fallback;
+    };
+
+    const theme = {
+        up: '#089981',
+        down: '#f23645',
+        bg: resolve('--background', '#0d1017'),
+        grid: resolve('--border', '#1e293b'),
+        text: resolve('--muted-foreground', '#94a3b8'),
+        crosshair: resolve('--foreground', '#ffffff'),
+    };
+
+    document.body.removeChild(temp);
+    return theme;
 };
 
 const TIMEFRAMES = [
-    { label: '1m', val: '1m' }, { label: '5m', val: '5m' }, { label: '15m', val: '15m' },
+    { label: '5m', val: '5m' }, { label: '15m', val: '15m' },
     { label: '1H', val: '1h' }, { label: '4H', val: '4h' }, { label: 'D', val: 'D' }, { label: 'W', val: 'W' }
 ];
 
@@ -55,9 +82,6 @@ const MARKET_DATA = {
 const generateData = (points = 300, basePriceInput = 21750) => {
     let candleData = []; // { time, open, high, low, close }
     let lineData = [];   // { time, value }
-    let volume = [];
-    let sma20 = [];
-    let ema50 = [];
     let stUp = [], stDown = [];
 
     const basePrice = typeof basePriceInput === 'string'
@@ -109,15 +133,6 @@ const generateData = (points = 300, basePriceInput = 21750) => {
         candleData.push({ time: currentTime, open, high, low, close });
         lineData.push({ time: currentTime, value: close });
 
-        volume.push({
-            time: currentTime,
-            value: volVal,
-            color: isUp ? THEME.volumeUp : THEME.volumeDown
-        });
-
-        sma20.push({ time: currentTime, value: s20 });
-        ema50.push({ time: currentTime, value: e50 });
-
         if (trendDir === 1) stUp.push({ time: currentTime, value: stVal });
         else stDown.push({ time: currentTime, value: stVal });
 
@@ -125,7 +140,7 @@ const generateData = (points = 300, basePriceInput = 21750) => {
         currentTime += 300;
     }
 
-    return { candleData, lineData, volume, sma20, ema50, stUp, stDown };
+    return { candleData, lineData, stUp, stDown };
 };
 
 const Dropdown = ({ label, icon: Icon, children }) => {
@@ -156,11 +171,10 @@ const MarketData = () => {
     const [chartType, setChartType] = useState('Candle');
     const [timeFrame, setTimeFrame] = useState('5m');
     const [features, setFeatures] = useState({
-        volume: true,
-        sma20: false,
-        ema50: false,
-        supertrend: true,
+        supertrend: false,
     });
+    // Add state to track theme changes
+    const [themeVersion, setThemeVersion] = useState(0);
 
     const chartContainerRef = useRef(null);
     const chartRef = useRef(null);
@@ -168,36 +182,50 @@ const MarketData = () => {
     const seriesRef = useRef({});
     const currentDataRef = useRef({}); // Store current data for legend
 
+    // --- Theme Observer ---
+    useEffect(() => {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    setThemeVersion(v => v + 1);
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
     // --- Chart Init ---
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
+        const theme = getThemeColors();
+
         const chart = createChart(chartContainerRef.current, {
             layout: {
-                background: { type: ColorType.Solid, color: THEME.bg },
-                textColor: THEME.text
+                background: { type: ColorType.Solid, color: theme.bg },
+                textColor: theme.text
             },
             grid: {
-                vertLines: { color: THEME.grid, style: LineStyle.Dotted },
-                horzLines: { color: THEME.grid, style: LineStyle.Dotted }
+                vertLines: { color: theme.grid, style: LineStyle.Dotted },
+                horzLines: { color: theme.grid, style: LineStyle.Dotted }
             },
             crosshair: {
                 mode: CrosshairMode.Normal,
                 vertLine: {
-                    labelBackgroundColor: THEME.bg,
+                    labelBackgroundColor: theme.bg,
                 },
                 horzLine: {
-                    labelBackgroundColor: THEME.bg,
+                    labelBackgroundColor: theme.bg,
                 }
             },
-            timeScale: { borderColor: '#334155', timeVisible: true },
-            rightPriceScale: { borderColor: '#334155', autoScale: true },
-        });
-
-        const volumeSeries = chart.addHistogramSeries({
-            priceFormat: { type: 'volume' },
-            priceScaleId: '',
-            scaleMargins: { top: 0.8, bottom: 0 },
+            timeScale: { borderColor: theme.grid, timeVisible: true },
+            rightPriceScale: { borderColor: theme.grid, autoScale: true },
         });
 
         let mainSeries;
@@ -209,31 +237,27 @@ const MarketData = () => {
             mainSeries = chart.addLineSeries({ color: '#2962ff' });
         } else {
             mainSeries = chart.addCandlestickSeries({
-                upColor: THEME.up, downColor: THEME.down, borderVisible: false, wickUpColor: THEME.up, wickDownColor: THEME.down
+                upColor: theme.up, downColor: theme.down, borderVisible: false, wickUpColor: theme.up, wickDownColor: theme.down
             });
         }
 
-        const sma20Series = chart.addLineSeries({ color: '#fbbf24', lineWidth: 1, visible: false });
-        const ema50Series = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, visible: false });
-        const stUpSeries = chart.addLineSeries({ color: THEME.up, lineWidth: 2, visible: false });
-        const stDownSeries = chart.addLineSeries({ color: THEME.down, lineWidth: 2, visible: false });
+        // Supertrend Series
+        const stUpSeries = chart.addLineSeries({ color: theme.up, lineWidth: 2, visible: false });
+        const stDownSeries = chart.addLineSeries({ color: theme.down, lineWidth: 2, visible: false });
 
-        seriesRef.current = { main: mainSeries, volume: volumeSeries, sma20: sma20Series, ema50: ema50Series, stUp: stUpSeries, stDown: stDownSeries };
+        seriesRef.current = { main: mainSeries, stUp: stUpSeries, stDown: stDownSeries };
         chartRef.current = chart;
 
         // --- Legend Logic ---
         chart.subscribeCrosshairMove(param => {
             if (!legendRef.current) return;
 
-            const { main, volume, sma20, ema50 } = seriesRef.current;
-            let currentPrice, open, high, low, close, vol, s20, e50;
+            const { main } = seriesRef.current;
+            let open, high, low, close;
 
             if (param.time) {
                 // Hovering over a candle
                 const mainData = param.seriesData.get(main);
-                const volData = param.seriesData.get(volume);
-                const s20Data = param.seriesData.get(sma20);
-                const e50Data = param.seriesData.get(ema50);
 
                 if (mainData) {
                     if (chartType === 'Candle') {
@@ -242,25 +266,18 @@ const MarketData = () => {
                         close = mainData.value;
                     }
                 }
-                vol = volData?.value;
-                s20 = s20Data?.value;
-                e50 = e50Data?.value;
             } else {
                 // Mouse Leave - Show Last Candle (Fallback)
                 if (currentDataRef.current.candleData?.length > 0) {
                     const last = currentDataRef.current.candleData[currentDataRef.current.candleData.length - 1];
                     ({ open, high, low, close } = last);
                 }
-                if (currentDataRef.current.volume?.length > 0) {
-                    vol = currentDataRef.current.volume[currentDataRef.current.volume.length - 1].value;
-                }
             }
 
             // HTML Format
-            // O: 2123 H: 2150 L: 2100 C: 2145 +1.5%
             let html = `<div class="flex items-center gap-4 text-[11px] font-mono">`;
 
-            if (open !== undefined) {
+            if (open !== undefined || close !== undefined) {
                 const isUp = close >= open;
                 const colorClass = isUp ? 'text-[#089981]' : 'text-[#f23645]';
 
@@ -270,18 +287,9 @@ const MarketData = () => {
                     html += `<span>L <span class="${colorClass}">${low.toFixed(2)}</span></span>`;
                     html += `<span>C <span class="${colorClass}">${close.toFixed(2)}</span></span>`;
                 } else {
-                    html += `<span>Price <span class="text-[#2962ff]">${(close || 0).toFixed(2)}</span></span>`; // Safety check for close
-                }
-
-                if (vol) {
-                    html += `<span class="text-slate-500">Vol <span class="text-slate-300">${(vol / 1000).toFixed(1)}K</span></span>`;
+                    html += `<span>Price <span class="text-[#2962ff]">${(close || 0).toFixed(2)}</span></span>`;
                 }
             }
-
-            // Indicators
-            if (features.sma20 && s20) html += `<span class="text-yellow-400">SMA20 ${s20.toFixed(2)}</span>`;
-            if (features.ema50 && e50) html += `<span class="text-blue-400">EMA50 ${e50.toFixed(2)}</span>`;
-
             html += `</div>`;
             legendRef.current.innerHTML = html;
         });
@@ -298,7 +306,7 @@ const MarketData = () => {
             observer.disconnect();
             chart.remove();
         };
-    }, [chartType, features]);
+    }, [chartType, features, themeVersion]);
 
     // --- Data Update ---
     useEffect(() => {
@@ -315,16 +323,10 @@ const MarketData = () => {
             seriesRef.current.main.setData(data.lineData);
         }
 
-        seriesRef.current.volume.setData(data.volume);
-        seriesRef.current.sma20.setData(data.sma20);
-        seriesRef.current.ema50.setData(data.ema50);
         seriesRef.current.stUp.setData(data.stUp);
         seriesRef.current.stDown.setData(data.stDown);
 
         // Update Visibility
-        seriesRef.current.volume.applyOptions({ visible: features.volume });
-        seriesRef.current.sma20.applyOptions({ visible: features.sma20 });
-        seriesRef.current.ema50.applyOptions({ visible: features.ema50 });
         seriesRef.current.stUp.applyOptions({ visible: features.supertrend });
         seriesRef.current.stDown.applyOptions({ visible: features.supertrend });
 
@@ -417,23 +419,10 @@ const MarketData = () => {
                             ))}
                         </Dropdown>
 
-                        <Dropdown label="Indicators" icon={Activity}>
-                            <button onClick={() => toggleFeature('supertrend')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
-                                <Zap size={12} className={features.supertrend ? "text-primary" : "text-muted-foreground"} /> Supertrend
-                            </button>
-                            <button onClick={() => toggleFeature('volume')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
-                                <BarChart2 size={12} className={features.volume ? "text-primary" : "text-muted-foreground"} /> Volume
-                            </button>
-                            <button onClick={() => toggleFeature('sma20')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
-                                <Activity size={12} className={features.sma20 ? "text-yellow-400" : "text-muted-foreground"} /> SMA 20
-                            </button>
-                            <button onClick={() => toggleFeature('ema50')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
-                                <Activity size={12} className={features.ema50 ? "text-blue-400" : "text-muted-foreground"} /> EMA 50
-                            </button>
-                        </Dropdown>
+                        <div className="h-4 w-[1px] bg-white/10 mx-1" />
                     </div>
 
-                    <div className="flex-1 w-full relative bg-[#0d1017]">
+                    <div className="flex-1 w-full relative bg-background">
                         {/* LEGEND OVERLAY */}
                         <div ref={legendRef} className="absolute left-3 top-2 z-20 pointer-events-none select-none">
                             {/* Content injected by crosshair handler */}
