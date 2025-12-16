@@ -1,172 +1,151 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createChart, ColorType, CrosshairMode, LineStyle } from 'lightweight-charts';
 import {
-    TrendingUp, TrendingDown, Activity, BarChart2, Globe, Bitcoin,
-    Layers, DollarSign, Settings, LineChart, CandlestickChart,
-    Eye, EyeOff, Grid, Search, ZoomIn
+    TrendingUp, Activity,
+    Layers, DollarSign, Settings, Eye, EyeOff,
+    Maximize2, ChevronDown, BarChart2, Zap
 } from 'lucide-react';
-import {
-    AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Line,
-    ComposedChart, Bar, Cell, Brush
-} from 'recharts';
 import { clsx } from 'clsx';
 
-// Constants
+// --- Constants ---
 const THEME = {
-    up: '#10b981',   // Emerald 500
-    down: '#ef4444', // Red 500
-    line: '#2962ff', // Blue 600
-    grid: '#1e293b', // Slate 800
-    text: '#64748b'  // Slate 500
+    up: '#089981',
+    down: '#f23645',
+    bg: '#0d1017',
+    grid: '#1e293b',
+    text: '#94a3b8',
+    crosshair: '#ffffff',
+    volumeUp: 'rgba(8, 153, 129, 0.5)',
+    volumeDown: 'rgba(242, 54, 69, 0.5)',
 };
 
-// --- Mock Data & Generators ---
+const TIMEFRAMES = [
+    { label: '1m', val: '1m' }, { label: '5m', val: '5m' }, { label: '15m', val: '15m' },
+    { label: '1H', val: '1h' }, { label: '4H', val: '4h' }, { label: 'D', val: 'D' }, { label: 'W', val: 'W' }
+];
+
+const CHART_TYPES = [
+    { id: 'Candle', label: 'Candles', icon: BarChart2 },
+    { id: 'Area', label: 'Area', icon: Activity },
+    { id: 'Line', label: 'Line', icon: TrendingUp },
+];
+
 const MARKET_DATA = {
     indices: [
         { symbol: 'NIFTY 50', price: '21,750.00', change: '+120.50', changePercent: '+0.56%', isUp: true, low: '21,600.00', high: '21,800.00' },
         { symbol: 'BANKNIFTY', price: '48,100.00', change: '-150.00', changePercent: '-0.31%', isUp: false, low: '47,900.00', high: '48,350.00' },
         { symbol: 'SENSEX', price: '72,200.00', change: '+350.00', changePercent: '+0.49%', isUp: true, low: '71,900.00', high: '72,400.00' },
-        { symbol: 'FINNIFTY', price: '21,450.00', change: '+40.00', changePercent: '+0.19%', isUp: true, low: '21,380.00', high: '21,520.00' },
     ],
     crypto: [
         { symbol: 'BTC/USD', price: '42,500.00', change: '+850.00', changePercent: '+2.05%', isUp: true, low: '41,200.00', high: '42,800.00' },
         { symbol: 'ETH/USD', price: '2,250.00', change: '-30.00', changePercent: '-1.30%', isUp: false, low: '2,200.00', high: '2,310.00' },
-        { symbol: 'SOL/USD', price: '98.50', priceRaw: 98.5, change: '+5.20', changePercent: '+5.50%', isUp: true, low: '92.00', high: '102.00' },
+        { symbol: 'SOL/USD', price: '98.50', change: '+5.20', changePercent: '+5.50%', isUp: true, low: '92.00', high: '102.00' },
     ],
     forex: [
         { symbol: 'EUR/USD', price: '1.0950', change: '+0.0020', changePercent: '+0.18%', isUp: true, low: '1.0910', high: '1.0980' },
         { symbol: 'GBP/USD', price: '1.2750', change: '-0.0015', changePercent: '-0.12%', isUp: false, low: '1.2720', high: '1.2790' },
-        { symbol: 'USD/JPY', price: '145.20', change: '+0.50', changePercent: '+0.35%', isUp: true, low: '144.50', high: '145.80' },
     ],
     commodities: [
         { symbol: 'GOLD', price: '2,050.00', change: '+15.00', changePercent: '+0.75%', isUp: true, low: '2,030.00', high: '2,060.00' },
         { symbol: 'CRUDE OIL', price: '72.50', change: '-1.20', changePercent: '-1.65%', isUp: false, low: '71.80', high: '74.00' },
-        { symbol: 'SILVER', price: '23.10', change: '+0.25', changePercent: '+1.10%', isUp: true, low: '22.80', high: '23.50' },
     ]
 };
 
-const generateCandleData = (points = 100, basePriceInput = 21750, timeframeMultiplier = 1) => {
-    let data = [];
+// --- Helper: Generate Strict Data ---
+const generateData = (points = 300, basePriceInput = 21750) => {
+    let candleData = []; // { time, open, high, low, close }
+    let lineData = [];   // { time, value }
+    let volume = [];
+    let sma20 = [];
+    let ema50 = [];
+    let stUp = [], stDown = [];
+
     const basePrice = typeof basePriceInput === 'string'
         ? parseFloat(basePriceInput.replace(/[^0-9.]/g, ''))
-        : basePriceInput;
+        : basePriceInput || 1000;
 
-    let price = basePrice || 1000;
-    const baseVolatility = (price * 0.002) * timeframeMultiplier;
+    let price = basePrice;
+    let lastClose = price;
+
+    const now = new Date();
+    now.setHours(9, 15, 0, 0);
+    // Start from past to present
+    let currentTime = Math.floor(now.getTime() / 1000) - (points * 300);
+
+    let trendDir = 1;
+    let stVal = price * 0.99;
 
     for (let i = 0; i < points; i++) {
-        const change = (Math.random() - 0.5) * baseVolatility;
-        const open = price;
-        const close = price + change;
-        const high = Math.max(open, close) + Math.abs(Math.random() * baseVolatility);
-        const low = Math.min(open, close) - Math.abs(Math.random() * baseVolatility);
+        const volatility = price * 0.002;
+        const trend = Math.sin(i / 15) * volatility;
+        const noise = (Math.random() - 0.5) * volatility;
 
-        const sma5 = close + (Math.random() - 0.5) * (baseVolatility * 1.5);
-        const sma20 = close + (Math.random() - 0.5) * (baseVolatility * 3);
+        const open = lastClose;
+        const close = open + trend + noise;
+        const high = Math.max(open, close) + Math.abs(Math.random() * volatility * 0.5);
+        const low = Math.min(open, close) - Math.abs(Math.random() * volatility * 0.5);
 
-        price = close;
+        const volVal = Math.floor(Math.random() * 1000) + 500;
         const isUp = close >= open;
 
-        data.push({
-            time: `${10 + Math.floor(i / 12)}:${(i % 12) * 5}`.replace(/:(\d)$/, ':0$1'),
-            open, high, low, close,
-            sma5, sma20,
-            volume: 500 + Math.floor(Math.random() * 1500),
-            isUp,
-            candleBody: [Math.min(open, close), Math.max(open, close)],
-            candleWick: [low, high]
+        // Indicators
+        const s20 = close + Math.cos(i / 10) * volatility * 2;
+        const e50 = close + Math.cos(i / 20) * volatility * 3;
+
+        // Supertrend
+        const atr = (high - low) * 3;
+        const upper = (high + low) / 2 + atr;
+        const lower = (high + low) / 2 - atr;
+
+        if (trendDir === 1) {
+            stVal = Math.max(stVal, lower);
+            if (close < stVal) { trendDir = -1; stVal = upper; }
+        } else {
+            stVal = Math.min(stVal, upper);
+            if (close > stVal) { trendDir = 1; stVal = lower; }
+        }
+
+        // Strict Object Creation
+        candleData.push({ time: currentTime, open, high, low, close });
+        lineData.push({ time: currentTime, value: close });
+
+        volume.push({
+            time: currentTime,
+            value: volVal,
+            color: isUp ? THEME.volumeUp : THEME.volumeDown
         });
+
+        sma20.push({ time: currentTime, value: s20 });
+        ema50.push({ time: currentTime, value: e50 });
+
+        if (trendDir === 1) stUp.push({ time: currentTime, value: stVal });
+        else stDown.push({ time: currentTime, value: stVal });
+
+        lastClose = close;
+        currentTime += 300;
     }
-    return data;
+
+    return { candleData, lineData, volume, sma20, ema50, stUp, stDown };
 };
 
-// --- Custom Components ---
-
-const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-        const d = payload.find(p => p.payload.candleBody)?.payload || payload[0].payload;
-        return (
-            <div className="bg-slate-950 border border-slate-800 p-3 rounded-lg shadow-2xl text-[10px] font-mono z-50 min-w-[180px] backdrop-blur-md">
-                <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-1">
-                    <span className="text-muted-foreground">{label}</span>
-                    <span className={clsx("font-bold px-1.5 py-0.5 rounded", d.isUp ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500")}>
-                        {d.close.toFixed(2)}
-                    </span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                    <span className="text-slate-500">Open</span>
-                    <span className="text-slate-200 text-right">{d.open.toFixed(2)}</span>
-                    <span className="text-slate-500">High</span>
-                    <span className="text-slate-200 text-right">{d.high.toFixed(2)}</span>
-                    <span className="text-slate-500">Low</span>
-                    <span className="text-slate-200 text-right">{d.low.toFixed(2)}</span>
-                    <span className="text-slate-500">Close</span>
-                    <span className="text-slate-200 text-right">{d.close.toFixed(2)}</span>
-                    <span className="text-slate-500">Volume</span>
-                    <span className="text-yellow-500 text-right">{d.volume.toLocaleString()}</span>
-                </div>
-            </div>
-        );
-    }
-    return null;
-};
-
-const SettingsMenu = ({ config, setConfig, isOpen, onClose }) => {
-    if (!isOpen) return null;
+const Dropdown = ({ label, icon: Icon, children }) => {
+    const [open, setOpen] = useState(false);
     return (
-        <div className="absolute bottom-12 right-4 w-56 bg-card border border-border shadow-2xl rounded-lg overflow-hidden z-[100] animate-in slide-in-from-bottom-2 fade-in duration-200">
-            <div className="p-3 border-b border-border bg-muted/20 font-bold text-[10px] uppercase tracking-wider text-muted-foreground">
-                Chart Settings
-            </div>
-
-            <div className="p-2 space-y-1">
-                {/* Chart Type */}
-                <div className="flex flex-col gap-1 p-2 bg-muted/10 rounded">
-                    <span className="text-[10px] font-semibold text-foreground mb-1">Chart Style</span>
-                    <div className="flex gap-1">
-                        <button
-                            onClick={() => setConfig({ ...config, type: 'area' })}
-                            className={clsx("flex-1 py-1.5 px-2 text-[10px] rounded border transition-colors flex items-center justify-center gap-1",
-                                config.type === 'area' ? "bg-primary/10 border-primary text-primary" : "border-transparent hover:bg-white/5 text-muted-foreground"
-                            )}
-                        >
-                            <LineChart size={12} /> Line
-                        </button>
-                        <button
-                            onClick={() => setConfig({ ...config, type: 'candle' })}
-                            className={clsx("flex-1 py-1.5 px-2 text-[10px] rounded border transition-colors flex items-center justify-center gap-1",
-                                config.type === 'candle' ? "bg-primary/10 border-primary text-primary" : "border-transparent hover:bg-white/5 text-muted-foreground"
-                            )}
-                        >
-                            <CandlestickChart size={12} /> Candle
-                        </button>
-                    </div>
+        <div className="relative z-50">
+            <button
+                onClick={() => setOpen(!open)}
+                onBlur={() => setTimeout(() => setOpen(false), 200)}
+                className={clsx("flex items-center gap-1 px-2 py-1 rounded hover:bg-white/5 transition-colors text-[11px]", open && "text-primary bg-primary/10")}
+            >
+                {Icon && <Icon size={14} />}
+                <span>{label}</span>
+                <ChevronDown size={10} className={clsx("transition-transform", open && "rotate-180")} />
+            </button>
+            {open && (
+                <div className="absolute top-full left-0 mt-1 w-40 bg-card border border-border rounded shadow-xl py-1 flex flex-col gap-0.5" onMouseDown={(e) => e.preventDefault()}>
+                    {children}
                 </div>
-
-                {/* Toggles */}
-                <button
-                    onClick={() => setConfig({ ...config, showZoom: !config.showZoom })}
-                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded transition-colors text-[11px]"
-                >
-                    <span className="flex items-center gap-2 text-muted-foreground"><ZoomIn size={12} /> Zoom Slider</span>
-                    {config.showZoom ? <Eye size={12} className="text-primary" /> : <EyeOff size={12} />}
-                </button>
-
-                <button
-                    onClick={() => setConfig({ ...config, showVolume: !config.showVolume })}
-                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded transition-colors text-[11px]"
-                >
-                    <span className="flex items-center gap-2 text-muted-foreground"><BarChart2 size={12} /> Volume Bars</span>
-                    {config.showVolume ? <Eye size={12} className="text-primary" /> : <EyeOff size={12} />}
-                </button>
-
-                <button
-                    onClick={() => setConfig({ ...config, showGrid: !config.showGrid })}
-                    className="w-full flex items-center justify-between p-2 hover:bg-white/5 rounded transition-colors text-[11px]"
-                >
-                    <span className="flex items-center gap-2 text-muted-foreground"><Grid size={12} /> Grid Lines</span>
-                    {config.showGrid ? <Eye size={12} className="text-primary" /> : <EyeOff size={12} />}
-                </button>
-            </div>
+            )}
         </div>
     );
 };
@@ -174,214 +153,220 @@ const SettingsMenu = ({ config, setConfig, isOpen, onClose }) => {
 const MarketData = () => {
     const [activeTab, setActiveTab] = useState('indices');
     const [selectedSymbol, setSelectedSymbol] = useState(null);
-    const [chartData, setChartData] = useState([]);
-
-    // UI States
-    const [timeFrame, setTimeFrame] = useState('1h');
-    const [showSettings, setShowSettings] = useState(false);
-
-    // Chart Config
-    const [config, setConfig] = useState({
-        type: 'area', // 'area' | 'candle'
-        showVolume: true,
-        showGrid: true,
-        showIndicators: false,
-        showZoom: true
+    const [chartType, setChartType] = useState('Candle');
+    const [timeFrame, setTimeFrame] = useState('5m');
+    const [features, setFeatures] = useState({
+        volume: true,
+        sma20: false,
+        ema50: false,
+        supertrend: true,
     });
 
-    const containerRef = useRef(null);
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const chartContainerRef = useRef(null);
+    const chartRef = useRef(null);
+    const legendRef = useRef(null); // Ref for the legend div
+    const seriesRef = useRef({});
+    const currentDataRef = useRef({}); // Store current data for legend
 
-    // --- Effects ---
-
-    useLayoutEffect(() => {
-        if (!containerRef.current) return;
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-                const { width, height } = entry.contentRect;
-                if (width > 0 && height > 0) setDimensions({ width, height });
-            }
-        });
-        resizeObserver.observe(containerRef.current);
-        return () => resizeObserver.disconnect();
-    }, []);
-
+    // --- Chart Init ---
     useEffect(() => {
-        if (!selectedSymbol && MARKET_DATA[activeTab].length > 0) {
+        if (!chartContainerRef.current) return;
+
+        const chart = createChart(chartContainerRef.current, {
+            layout: {
+                background: { type: ColorType.Solid, color: THEME.bg },
+                textColor: THEME.text
+            },
+            grid: {
+                vertLines: { color: THEME.grid, style: LineStyle.Dotted },
+                horzLines: { color: THEME.grid, style: LineStyle.Dotted }
+            },
+            crosshair: {
+                mode: CrosshairMode.Normal,
+                vertLine: {
+                    labelBackgroundColor: THEME.bg,
+                },
+                horzLine: {
+                    labelBackgroundColor: THEME.bg,
+                }
+            },
+            timeScale: { borderColor: '#334155', timeVisible: true },
+            rightPriceScale: { borderColor: '#334155', autoScale: true },
+        });
+
+        const volumeSeries = chart.addHistogramSeries({
+            priceFormat: { type: 'volume' },
+            priceScaleId: '',
+            scaleMargins: { top: 0.8, bottom: 0 },
+        });
+
+        let mainSeries;
+        if (chartType === 'Area') {
+            mainSeries = chart.addAreaSeries({
+                lineColor: '#2962ff', topColor: 'rgba(41, 98, 255, 0.4)', bottomColor: 'rgba(41, 98, 255, 0)'
+            });
+        } else if (chartType === 'Line') {
+            mainSeries = chart.addLineSeries({ color: '#2962ff' });
+        } else {
+            mainSeries = chart.addCandlestickSeries({
+                upColor: THEME.up, downColor: THEME.down, borderVisible: false, wickUpColor: THEME.up, wickDownColor: THEME.down
+            });
+        }
+
+        const sma20Series = chart.addLineSeries({ color: '#fbbf24', lineWidth: 1, visible: false });
+        const ema50Series = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, visible: false });
+        const stUpSeries = chart.addLineSeries({ color: THEME.up, lineWidth: 2, visible: false });
+        const stDownSeries = chart.addLineSeries({ color: THEME.down, lineWidth: 2, visible: false });
+
+        seriesRef.current = { main: mainSeries, volume: volumeSeries, sma20: sma20Series, ema50: ema50Series, stUp: stUpSeries, stDown: stDownSeries };
+        chartRef.current = chart;
+
+        // --- Legend Logic ---
+        chart.subscribeCrosshairMove(param => {
+            if (!legendRef.current) return;
+
+            const { main, volume, sma20, ema50 } = seriesRef.current;
+            let currentPrice, open, high, low, close, vol, s20, e50;
+
+            if (param.time) {
+                // Hovering over a candle
+                const mainData = param.seriesData.get(main);
+                const volData = param.seriesData.get(volume);
+                const s20Data = param.seriesData.get(sma20);
+                const e50Data = param.seriesData.get(ema50);
+
+                if (mainData) {
+                    if (chartType === 'Candle') {
+                        ({ open, high, low, close } = mainData);
+                    } else {
+                        close = mainData.value;
+                    }
+                }
+                vol = volData?.value;
+                s20 = s20Data?.value;
+                e50 = e50Data?.value;
+            } else {
+                // Mouse Leave - Show Last Candle (Fallback)
+                if (currentDataRef.current.candleData?.length > 0) {
+                    const last = currentDataRef.current.candleData[currentDataRef.current.candleData.length - 1];
+                    ({ open, high, low, close } = last);
+                }
+                if (currentDataRef.current.volume?.length > 0) {
+                    vol = currentDataRef.current.volume[currentDataRef.current.volume.length - 1].value;
+                }
+            }
+
+            // HTML Format
+            // O: 2123 H: 2150 L: 2100 C: 2145 +1.5%
+            let html = `<div class="flex items-center gap-4 text-[11px] font-mono">`;
+
+            if (open !== undefined) {
+                const isUp = close >= open;
+                const colorClass = isUp ? 'text-[#089981]' : 'text-[#f23645]';
+
+                if (chartType === 'Candle') {
+                    html += `<span>O <span class="${colorClass}">${open.toFixed(2)}</span></span>`;
+                    html += `<span>H <span class="${colorClass}">${high.toFixed(2)}</span></span>`;
+                    html += `<span>L <span class="${colorClass}">${low.toFixed(2)}</span></span>`;
+                    html += `<span>C <span class="${colorClass}">${close.toFixed(2)}</span></span>`;
+                } else {
+                    html += `<span>Price <span class="text-[#2962ff]">${(close || 0).toFixed(2)}</span></span>`; // Safety check for close
+                }
+
+                if (vol) {
+                    html += `<span class="text-slate-500">Vol <span class="text-slate-300">${(vol / 1000).toFixed(1)}K</span></span>`;
+                }
+            }
+
+            // Indicators
+            if (features.sma20 && s20) html += `<span class="text-yellow-400">SMA20 ${s20.toFixed(2)}</span>`;
+            if (features.ema50 && e50) html += `<span class="text-blue-400">EMA50 ${e50.toFixed(2)}</span>`;
+
+            html += `</div>`;
+            legendRef.current.innerHTML = html;
+        });
+
+        const handleResize = () => {
+            if (chartContainerRef.current) {
+                chart.applyOptions({ width: chartContainerRef.current.clientWidth, height: chartContainerRef.current.clientHeight });
+            }
+        };
+        const observer = new ResizeObserver(handleResize);
+        observer.observe(chartContainerRef.current);
+
+        return () => {
+            observer.disconnect();
+            chart.remove();
+        };
+    }, [chartType, features]);
+
+    // --- Data Update ---
+    useEffect(() => {
+        if (!selectedSymbol || !chartRef.current) return;
+
+        // Generate
+        const data = generateData(500, selectedSymbol.price);
+        currentDataRef.current = data; // Store for fallback
+
+        // Set Data - Handle Type Mismatch
+        if (chartType === 'Candle') {
+            seriesRef.current.main.setData(data.candleData);
+        } else {
+            seriesRef.current.main.setData(data.lineData);
+        }
+
+        seriesRef.current.volume.setData(data.volume);
+        seriesRef.current.sma20.setData(data.sma20);
+        seriesRef.current.ema50.setData(data.ema50);
+        seriesRef.current.stUp.setData(data.stUp);
+        seriesRef.current.stDown.setData(data.stDown);
+
+        // Update Visibility
+        seriesRef.current.volume.applyOptions({ visible: features.volume });
+        seriesRef.current.sma20.applyOptions({ visible: features.sma20 });
+        seriesRef.current.ema50.applyOptions({ visible: features.ema50 });
+        seriesRef.current.stUp.applyOptions({ visible: features.supertrend });
+        seriesRef.current.stDown.applyOptions({ visible: features.supertrend });
+
+        // Force Scale Fit (Ensures data is visible on type switch)
+        chartRef.current.timeScale().fitContent();
+
+        chartRef.current.applyOptions({
+            watermark: {
+                visible: true,
+                fontSize: 24,
+                horzAlign: 'center',
+                vertAlign: 'center',
+                color: 'rgba(255, 255, 255, 0.05)',
+                text: `${selectedSymbol.symbol} • ${timeFrame} • Market`,
+            },
+        });
+
+    }, [selectedSymbol, features, timeFrame, chartType]);
+
+    // Init
+    useEffect(() => {
+        if (!selectedSymbol && MARKET_DATA[activeTab].length) {
             setSelectedSymbol(MARKET_DATA[activeTab][0]);
         }
     }, [activeTab]);
 
-    useEffect(() => {
-        if (selectedSymbol) {
-            const multipliers = { '1m': 0.2, '5m': 0.5, '15m': 0.8, '1h': 1, '4h': 2, 'D': 4, 'W': 10 };
-            const multiplier = multipliers[timeFrame] || 1;
-            setChartData(generateCandleData(80, selectedSymbol.price, multiplier));
-        }
-    }, [selectedSymbol, timeFrame]);
-
-    const handleTabChange = (tab) => {
-        setActiveTab(tab);
-        setSelectedSymbol(MARKET_DATA[tab][0]);
-    };
-
-    // --- Renderers ---
-
-    const renderChart = () => {
-        if (!dimensions.width) return null;
-
-        return (
-            <ComposedChart
-                width={dimensions.width}
-                height={dimensions.height}
-                data={chartData}
-                margin={{ top: 10, right: 0, left: 10, bottom: 0 }}
-            >
-                <defs>
-                    <linearGradient id="gradientPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={THEME.line} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={THEME.line} stopOpacity={0} />
-                    </linearGradient>
-                </defs>
-
-                {config.showGrid && (
-                    <CartesianGrid strokeDasharray="3 3" vertical={true} stroke={THEME.grid} opacity={0.3} />
-                )}
-
-                <XAxis
-                    dataKey="time"
-                    tick={{ fontSize: 10, fill: THEME.text }}
-                    axisLine={{ stroke: '#334155' }}
-                    tickLine={false}
-                    interval={Math.floor(dimensions.width / 120)}
-                />
-
-                <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    domain={['auto', 'auto']}
-                    tick={{ fontSize: 10, fill: THEME.text }}
-                    axisLine={{ stroke: '#334155' }}
-                    tickLine={false}
-                    tickFormatter={(val) => val.toFixed(2)}
-                    width={50}
-                />
-                <YAxis
-                    yAxisId="left"
-                    orientation="left"
-                    domain={[0, 'dataMax * 4']}
-                    hide
-                />
-
-                <Tooltip
-                    content={<CustomTooltip />}
-                    cursor={{ stroke: '#fff', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.5 }}
-                />
-
-                {/* ZOOM SLIDER (Brush) */}
-                {config.showZoom && (
-                    <Brush
-                        dataKey="time"
-                        height={20}
-                        stroke={THEME.text}
-                        fill="#0b121f"
-                        tickFormatter={() => ''}
-                        travellerWidth={10}
-                        y={dimensions.height - 20}
-                    />
-                )}
-
-                {/* Volume Layer */}
-                {config.showVolume && (
-                    <Bar
-                        yAxisId="left"
-                        dataKey="volume"
-                        barSize={4}
-                        fillOpacity={0.3}
-                        radius={[2, 2, 0, 0]}
-                    >
-                        {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.isUp ? THEME.up : THEME.down} />
-                        ))}
-                    </Bar>
-                )}
-
-                {/* Price Layer: Area vs Candle */}
-                {config.type === 'area' ? (
-                    <Area
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="close"
-                        stroke={THEME.line}
-                        strokeWidth={2}
-                        fill="url(#gradientPrice)"
-                        activeDot={{ r: 4, strokeWidth: 2, stroke: '#0f172a', fill: '#fff' }}
-                        animationDuration={300}
-                    />
-                ) : (
-                    /* Authentic Candlestick using Dual Floating Bars */
-                    <>
-                        {/* Wick */}
-                        <Bar
-                            yAxisId="right"
-                            dataKey="candleWick"
-                            barSize={1}
-                            minPointSize={1}
-                        >
-                            {chartData.map((entry, index) => (
-                                <Cell key={`wick-${index}`} fill={entry.isUp ? THEME.up : THEME.down} />
-                            ))}
-                        </Bar>
-                        {/* Body */}
-                        <Bar
-                            yAxisId="right"
-                            dataKey="candleBody"
-                            barSize={6}
-                            minPointSize={1}
-                        >
-                            {chartData.map((entry, index) => (
-                                <Cell key={`body-${index}`} fill={entry.isUp ? THEME.up : THEME.down} />
-                            ))}
-                        </Bar>
-                    </>
-                )}
-
-                {/* Indicators */}
-                {config.showIndicators && (
-                    <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="sma5"
-                        stroke="#fbbf24"
-                        strokeWidth={1.5}
-                        dot={false}
-                        opacity={0.8}
-                    />
-                )}
-            </ComposedChart>
-        );
-    };
+    const toggleFeature = (key) => setFeatures(f => ({ ...f, [key]: !f[key] }));
 
     return (
         <div className="h-full flex flex-col gap-4">
-            {/* --- Header Tabs --- */}
+            {/* Header Tabs */}
             <div className="flex flex-col gap-4 shrink-0">
                 <div className="flex items-center gap-1 border-b border-border overflow-x-auto custom-scrollbar">
-                    {['indices', 'crypto', 'forex', 'commodities'].map(tab => (
+                    {Object.keys(MARKET_DATA).map(tab => (
                         <button
                             key={tab}
-                            onClick={() => handleTabChange(tab)}
+                            onClick={() => { setActiveTab(tab); setSelectedSymbol(MARKET_DATA[tab][0]); }}
                             className={clsx(
                                 "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2 whitespace-nowrap",
-                                activeTab === tab
-                                    ? "border-primary text-primary bg-primary/5"
-                                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                                activeTab === tab ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
                             )}
                         >
-                            {tab === 'indices' && <Layers size={14} />}
-                            {tab === 'crypto' && <Bitcoin size={14} />}
-                            {tab === 'forex' && <Globe size={14} />}
-                            {tab === 'commodities' && <DollarSign size={14} />}
                             {tab}
                         </button>
                     ))}
@@ -389,132 +374,100 @@ const MarketData = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+                {/* 1. Chart Area (Now FIRST/LEFT) */}
+                <div className="terminal-panel lg:col-span-2 border border-border bg-card rounded-lg overflow-hidden flex flex-col shadow-2xl relative">
+                    {/* Toolbar */}
+                    <div className="h-10 border-b border-white/5 bg-[#0f172a] flex items-center px-4 gap-2 shrink-0">
+                        <div className="flex items-center gap-2 mr-4 min-w-[120px]">
+                            <span className="font-bold text-sm text-foreground">{selectedSymbol?.symbol}</span>
+                            <span className="text-[10px] text-muted-foreground bg-white/5 px-1 rounded">CME</span>
+                        </div>
 
-                {/* --- Data Table Panel --- */}
-                {/* CHANGED: h-[500px] -> h-full for full screen fill */}
-                <div className="terminal-panel w-full h-full overflow-hidden border border-border bg-card rounded-lg shadow-2xl relative flex flex-col lg:col-span-1 min-h-0">
-                    <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-                    <div className="p-3 border-b border-border bg-muted/20 font-bold text-xs uppercase text-muted-foreground flex justify-between items-center relative z-20 backdrop-blur-sm">
-                        <span>{activeTab} Overview</span>
-                        <div className="text-[9px] font-mono opacity-70">Live Feed</div>
+                        <div className="h-4 w-[1px] bg-white/10 mx-1 mobile-hide" />
+
+                        <div className="flex bg-black/20 rounded p-0.5">
+                            {TIMEFRAMES.map(tf => (
+                                <button
+                                    key={tf.val}
+                                    onClick={() => setTimeFrame(tf.val)}
+                                    className={clsx(
+                                        "px-2 py-0.5 text-[10px] font-bold rounded transition-colors",
+                                        timeFrame === tf.val ? "bg-primary text-black" : "text-muted-foreground hover:text-white"
+                                    )}
+                                >
+                                    {tf.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="h-4 w-[1px] bg-white/10 mx-1" />
+
+                        <Dropdown label={CHART_TYPES.find(t => t.id === chartType)?.label} icon={CHART_TYPES.find(t => t.id === chartType)?.icon}>
+                            {CHART_TYPES.map(t => (
+                                <button
+                                    key={t.id}
+                                    onClick={() => setChartType(t.id)}
+                                    className={clsx(
+                                        "px-3 py-1.5 text-left text-[11px] hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-2",
+                                        chartType === t.id && "text-primary font-bold"
+                                    )}
+                                >
+                                    <t.icon size={12} /> {t.label}
+                                </button>
+                            ))}
+                        </Dropdown>
+
+                        <Dropdown label="Indicators" icon={Activity}>
+                            <button onClick={() => toggleFeature('supertrend')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
+                                <Zap size={12} className={features.supertrend ? "text-primary" : "text-muted-foreground"} /> Supertrend
+                            </button>
+                            <button onClick={() => toggleFeature('volume')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
+                                <BarChart2 size={12} className={features.volume ? "text-primary" : "text-muted-foreground"} /> Volume
+                            </button>
+                            <button onClick={() => toggleFeature('sma20')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
+                                <Activity size={12} className={features.sma20 ? "text-yellow-400" : "text-muted-foreground"} /> SMA 20
+                            </button>
+                            <button onClick={() => toggleFeature('ema50')} className="px-3 py-1.5 text-left text-[11px] hover:bg-white/5 flex items-center gap-2 w-full">
+                                <Activity size={12} className={features.ema50 ? "text-blue-400" : "text-muted-foreground"} /> EMA 50
+                            </button>
+                        </Dropdown>
                     </div>
 
-                    <div className="overflow-auto flex-1 custom-scrollbar">
-                        <table className="w-full text-left whitespace-nowrap">
-                            <thead className="bg-muted/50 sticky top-0 z-10 uppercase tracking-widest text-[9px] font-bold text-muted-foreground border-b border-border shadow-sm backdrop-blur-md">
-                                <tr>
-                                    <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Symbol</th>
-                                    <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Price</th>
-                                    <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Change</th>
-                                    <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">H/L</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
-                                {MARKET_DATA[activeTab].map((m) => (
+                    <div className="flex-1 w-full relative bg-[#0d1017]">
+                        {/* LEGEND OVERLAY */}
+                        <div ref={legendRef} className="absolute left-3 top-2 z-20 pointer-events-none select-none">
+                            {/* Content injected by crosshair handler */}
+                        </div>
+                        <div ref={chartContainerRef} className="absolute inset-0 w-full h-full" />
+                    </div>
+                </div>
+
+                {/* 2. Watchlist (Now SECOND/RIGHT) */}
+                <div className="terminal-panel lg:col-span-1 border border-border bg-card rounded-lg overflow-hidden flex flex-col shadow-2xl">
+                    <div className="p-3 border-b border-border bg-muted/20 font-bold text-xs uppercase text-muted-foreground">
+                        {activeTab} Live
+                    </div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        <table className="w-full text-left">
+                            <tbody className="text-[11px] font-mono">
+                                {MARKET_DATA[activeTab].map(m => (
                                     <tr
                                         key={m.symbol}
                                         onClick={() => setSelectedSymbol(m)}
                                         className={clsx(
-                                            "cursor-pointer transition-colors group relative",
-                                            selectedSymbol?.symbol === m.symbol ? "bg-primary/5" : "hover:bg-primary/[0.02]"
+                                            "cursor-pointer hover:bg-white/5 transition-colors border-b border-white/5",
+                                            selectedSymbol?.symbol === m.symbol && "bg-primary/10"
                                         )}
                                     >
-                                        <td className="px-5 py-3 border-r border-border relative">
-                                            {selectedSymbol?.symbol === m.symbol && <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary"></div>}
-                                            <span className={clsx("font-bold", selectedSymbol?.symbol === m.symbol ? "text-primary" : "text-foreground")}>{m.symbol}</span>
-                                        </td>
-                                        <td className="px-5 py-3 text-right text-foreground font-bold border-r border-border">{m.price}</td>
-                                        <td className={`px-5 py-3 text-right font-bold border-r border-border ${m.isUp ? 'text-emerald-500' : 'text-red-500'}`}>
-                                            <div className="flex items-center justify-end gap-1">
-                                                {m.isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                                                {m.change}
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-3 text-right text-muted-foreground border-r border-border">
-                                            <span className="text-emerald-500/80">{m.high}</span>/<span className="text-red-500/80">{m.low}</span>
+                                        <td className="p-3 font-bold text-foreground">{m.symbol}</td>
+                                        <td className="p-3 text-right">{m.price}</td>
+                                        <td className={clsx("p-3 text-right font-bold", m.isUp ? "text-[#089981]" : "text-[#f23645]")}>
+                                            {m.changePercent}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                {/* --- Chart Panel --- */}
-                {/* CHANGED: h-[500px] -> h-full for full screen fill */}
-                <div className="terminal-panel w-full h-full overflow-hidden border border-border bg-card rounded-lg shadow-2xl relative flex flex-col transition-all duration-300 lg:col-span-2 min-h-0">
-                    {/* Top Bar Info */}
-                    <div className="p-3 border-b border-border bg-muted/20 flex flex-col gap-2 shrink-0 relative z-20 backdrop-blur-sm">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-sm tracking-tight text-foreground flex items-center gap-2">
-                                {selectedSymbol ? selectedSymbol.symbol : 'Select Symbol'}
-                                <span className="text-[10px] text-muted-foreground font-normal border border-white/10 px-1 rounded">NSE</span>
-                            </h3>
-                            {selectedSymbol && (
-                                <div className="flex items-center gap-3">
-                                    <span className={clsx("text-lg font-bold tracking-tight font-mono", selectedSymbol.isUp ? "text-emerald-500" : "text-red-500")}>
-                                        {selectedSymbol.price}
-                                    </span>
-                                    <span className={clsx("text-xs font-mono", selectedSymbol.isUp ? "text-emerald-500" : "text-red-500")}>
-                                        {selectedSymbol.change} ({selectedSymbol.changePercent})
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Chart Container */}
-                    <div className="flex-1 w-full min-h-0 relative bg-[#0b121f] flex flex-col group">
-                        {/* Toolbar */}
-                        <div className="h-10 border-b border-white/5 flex items-center px-4 gap-4 text-[11px] text-muted-foreground bg-[#0f172a] shrink-0 overflow-x-auto custom-scrollbar">
-                            <button
-                                onClick={() => setConfig({ ...config, showIndicators: !config.showIndicators })}
-                                className={clsx("flex items-center gap-1 hover:text-white cursor-pointer transition-colors px-2 py-1 rounded", config.showIndicators && "bg-primary/20 text-primary")}
-                            >
-                                <Activity size={14} /> Indicators
-                            </button>
-
-                            <div className="h-4 w-[1px] bg-white/10"></div>
-
-                            {['1m', '5m', '15m', '1h', '4h', 'D', 'W'].map(t => (
-                                <button
-                                    key={t}
-                                    onClick={() => setTimeFrame(t)}
-                                    className={clsx(
-                                        "cursor-pointer hover:text-primary transition-colors px-2 py-1 rounded min-w-[30px] text-center",
-                                        timeFrame === t ? "text-primary font-bold bg-white/5" : ""
-                                    )}
-                                >
-                                    {t}
-                                </button>
-                            ))}
-
-                            <div className="flex-1"></div>
-
-                            <div className="flex items-center gap-2 relative">
-                                <button
-                                    onClick={() => setShowSettings(!showSettings)}
-                                    className={clsx("p-1.5 rounded transition-colors relative z-20", showSettings ? "bg-primary text-black hover:bg-primary/90" : "hover:bg-white/5 text-white hover:text-primary")}
-                                    title="Settings"
-                                >
-                                    <Settings size={14} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Settings Popover */}
-                        <SettingsMenu config={config} setConfig={setConfig} isOpen={showSettings} onClose={() => setShowSettings(false)} />
-
-                        {/* Rendering Area */}
-                        {/* Ensure min-height or flex behavior keeps it visible */}
-                        <div ref={containerRef} className="flex-1 w-full h-full min-h-[400px] relative overflow-hidden cursor-crosshair">
-                            {renderChart()}
-                            {!selectedSymbol && (
-                                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs">
-                                    Select a symbol to view chart
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
             </div>
