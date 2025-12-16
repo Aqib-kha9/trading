@@ -26,16 +26,9 @@ const Header = ({ onMenuClick }) => {
                     <Menu size={14} />
                 </button>
 
-                <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 bg-gradient-to-tr from-primary to-emerald-600 rounded-md flex items-center justify-center font-bold text-black text-[10px] shadow-[0_0_10px_rgba(16,185,129,0.3)]">M</div>
-                    <span className="font-sans text-xs font-bold tracking-tight hidden md:block text-white/90">MASTER<span className="text-primary">STROKE</span></span>
-                    <span className="text-[9px] text-muted-foreground px-1.5 py-0.5 border border-white/10 bg-white/5 rounded-md hidden md:block">PRO_v2.4.0</span>
-                </div>
-
-                <div className="h-4 w-[1px] bg-white/10 mx-2 hidden md:block"></div>
 
                 {/* Quick Ticker Inline - Floating */}
-                <div className="hidden md:flex items-center overflow-hidden w-[400px] mask-linear-fade relative h-full">
+                <div className="hidden md:flex items-center overflow-hidden md:w-[100px] lg:w-[450px] xl:w-[550px] 2xl:w-[750px] mask-linear-fade relative h-full">
                     <TickerMarquee />
                 </div>
             </div>

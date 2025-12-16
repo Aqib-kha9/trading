@@ -139,11 +139,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                             <Command size={10} className="text-black" />
                         </div>
                         <div className={clsx("flex flex-col transition-all duration-300", collapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100 block")}>
-                            <span className="text-[10px] font-black tracking-tighter text-foreground leading-none">QUANTUM</span>
+                            <span className="text-[10px] font-black tracking-tighter text-foreground leading-none">MASTER<span className="text-primary">STROKE</span></span>
                         </div>
                     </div>
                     <div className={clsx("transition-all duration-300", collapsed ? "hidden" : "block")}>
-                        <span className="text-[8px] font-bold text-primary tracking-wider border border-primary/20 bg-primary/5 px-1 rounded-sm">ADMIN</span>
+                        <span className="text-[8px] font-bold text-muted-foreground tracking-wider border border-white/10 bg-white/5 px-1 rounded-sm">PRO_v2.4.0</span>
                     </div>
                 </div>
 
