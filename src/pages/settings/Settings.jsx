@@ -1,36 +1,98 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
-import { Settings as SettingsIcon, Shield, Headphones, CreditCard, Bell, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Headphones, CreditCard, Bell, Save, Palette, Type, LayoutTemplate } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 
 const Settings = () => {
-    const [activeTab, setActiveTab] = useState('admin'); // admin, support, payment, notifications
+    const [activeTab, setActiveTab] = useState('admin'); // admin, support, appearance, payment, notifications
+    const [currentFont, setCurrentFont] = useState('Outfit');
+    const [currentTheme, setCurrentTheme] = useState('theme-navy');
+
+    // Available Fonts
+    const FONTS = [
+        { name: 'Outfit', label: 'Default (Outfit)', class: 'font-outfit' },
+        { name: 'Inter', label: 'Inter', class: 'font-inter' },
+        { name: 'Roboto', label: 'Roboto', class: 'font-roboto' },
+        { name: 'Poppins', label: 'Poppins', class: 'font-poppins' },
+        { name: 'Montserrat', label: 'Montserrat', class: 'font-montserrat' },
+        { name: 'Lato', label: 'Lato', class: 'font-lato' },
+        { name: 'Playfair Display', label: 'Playfair (Serif)', class: 'font-playfair' },
+        { name: 'Space Grotesk', label: 'Space (Tech)', class: 'font-space' },
+        { name: 'Fira Code', label: 'Fira Code (Mono)', class: 'font-fira' },
+        { name: 'Oswald', label: 'Oswald (Bold)', class: 'font-oswald' },
+        { name: 'Ubuntu', label: 'Ubuntu (Humanist)', class: 'font-ubuntu' },
+    ];
+
+    // Available Themes
+    const THEMES = [
+        { id: 'theme-navy', name: 'Navy Default', colors: ['#0f172a', '#eab308'] }, // Slate-900 & Amber
+        { id: 'theme-royal', name: 'Royal Indigo', colors: ['#1e1b4b', '#fbbf24'] }, // Indigo & Gold
+        { id: 'theme-sunset', name: 'Cyber Sunset', colors: ['#2e1065', '#db2777'] }, // Purple & Pink
+        { id: 'theme-coffee', name: 'Coffee House', colors: ['#1c1917', '#d97706'] }, // Stone & Amber
+        { id: 'theme-teal', name: 'Deep Teal', colors: ['#042f2e', '#14b8a6'] },    // Teal & Teal
+        { id: 'theme-midnight', name: 'Midnight', colors: ['#0a0a0d', '#9333ea'] }, // Black & Purple
+        { id: 'theme-forest', name: 'Dark Forest', colors: ['#051a0f', '#fbbf24'] }, // Dark Green & Gold
+        { id: 'theme-crimson', name: 'Crimson', colors: ['#1a0a0a', '#e11d48'] },   // Dark Red & Red
+        { id: 'theme-zen', name: 'Zen Focus (Eye Safe)', colors: ['#18181b', '#fb923c'] }, // Charcoal & Warm Orange
+        { id: 'light', name: 'Platinum Light', colors: ['#f8fafc', '#0f172a'] },    // Light Mode
+    ];
+
+    useEffect(() => {
+        // Load font preference
+        const savedFont = localStorage.getItem('theme-font');
+        if (savedFont) {
+            setCurrentFont(savedFont);
+            document.documentElement.style.setProperty('--font-primary', savedFont);
+        }
+
+        // Load theme preference
+        const savedTheme = localStorage.getItem('theme-preference') || 'theme-navy';
+        setCurrentTheme(savedTheme);
+        document.body.className = savedTheme; // Apply to body
+    }, []);
+
+    const handleFontChange = (fontName) => {
+        setCurrentFont(fontName);
+        document.documentElement.style.setProperty('--font-primary', fontName);
+        localStorage.setItem('theme-font', fontName);
+    };
+
+    const handleThemeChange = (themeId) => {
+        setCurrentTheme(themeId);
+        document.body.className = themeId; // Completely replace classes to avoid conflicts
+        localStorage.setItem('theme-preference', themeId);
+    };
 
     return (
         <div className="h-full flex flex-col gap-4">
             {/* Header with Tabs */}
             <div className="flex flex-col gap-4 shrink-0">
                 {/* Tab Navigation */}
-                <div className="flex items-center gap-1 border-b border-border">
+                <div className="flex items-center gap-1 border-b border-border overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('admin')}
                         className={clsx(
-                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2",
-                            activeTab === 'admin'
-                                ? "border-primary text-primary bg-primary/5"
-                                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2 whitespace-nowrap",
+                            activeTab === 'admin' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
                         )}
                     >
                         <Shield size={14} /> Admin
                     </button>
                     <button
+                        onClick={() => setActiveTab('appearance')}
+                        className={clsx(
+                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2 whitespace-nowrap",
+                            activeTab === 'appearance' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                        )}
+                    >
+                        <Palette size={14} /> Appearance
+                    </button>
+                    <button
                         onClick={() => setActiveTab('support')}
                         className={clsx(
-                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2",
-                            activeTab === 'support'
-                                ? "border-primary text-primary bg-primary/5"
-                                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2 whitespace-nowrap",
+                            activeTab === 'support' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
                         )}
                     >
                         <Headphones size={14} /> Support
@@ -38,10 +100,8 @@ const Settings = () => {
                     <button
                         onClick={() => setActiveTab('payment')}
                         className={clsx(
-                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2",
-                            activeTab === 'payment'
-                                ? "border-primary text-primary bg-primary/5"
-                                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2 whitespace-nowrap",
+                            activeTab === 'payment' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
                         )}
                     >
                         <CreditCard size={14} /> Payment
@@ -49,10 +109,8 @@ const Settings = () => {
                     <button
                         onClick={() => setActiveTab('notifications')}
                         className={clsx(
-                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2",
-                            activeTab === 'notifications'
-                                ? "border-primary text-primary bg-primary/5"
-                                : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                            "px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all border-b-2 whitespace-nowrap",
+                            activeTab === 'notifications' ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
                         )}
                     >
                         <Bell size={14} /> Notifications
@@ -85,6 +143,82 @@ const Settings = () => {
                                     <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
                                         <Save size={16} /> Save Changes
                                     </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    {activeTab === 'appearance' && (
+                        <Card className="terminal-panel bg-card border-border" noPadding>
+                            <div className="p-4 border-b border-border bg-muted/20 flex items-center gap-2">
+                                <Palette size={16} className="text-primary" />
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-foreground">Appearance & Typography</h3>
+                            </div>
+                            <div className="p-6 space-y-8">
+
+                                {/* Theme Selection */}
+                                <div className="space-y-4">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                        <LayoutTemplate size={14} /> Color Theme
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                                        {THEMES.map((theme) => (
+                                            <button
+                                                key={theme.id}
+                                                onClick={() => handleThemeChange(theme.id)}
+                                                className={clsx(
+                                                    "p-3 rounded-xl border text-left transition-all hover:scale-[1.05] relative overflow-hidden group",
+                                                    currentTheme === theme.id
+                                                        ? "border-primary ring-1 ring-primary shadow-lg shadow-primary/20"
+                                                        : "border-border hover:border-muted-foreground/50"
+                                                )}
+                                            >
+                                                <div className="absolute inset-0 z-0">
+                                                    <div className="h-full w-full" style={{ backgroundColor: theme.colors[0] }}></div>
+                                                </div>
+                                                <div className="relative z-10 flex flex-col items-center gap-3 py-2">
+                                                    <div className="w-8 h-8 rounded-full border-2 border-white/20 shadow-xl" style={{ backgroundColor: theme.colors[1] }}></div>
+                                                    <span className={clsx(
+                                                        "text-[10px] font-bold uppercase tracking-wider",
+                                                        theme.id === 'light' ? "text-slate-900" : "text-white"
+                                                    )}>
+                                                        {theme.name}
+                                                    </span>
+                                                </div>
+                                                {currentTheme === theme.id && (
+                                                    <div className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full shadow-glow-sm"></div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="h-px bg-white/5"></div>
+
+                                {/* Font Selection */}
+                                <div className="space-y-4">
+                                    <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                                        <Type size={14} /> Typography
+                                    </label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                        {FONTS.map((font) => (
+                                            <button
+                                                key={font.name}
+                                                onClick={() => handleFontChange(font.name)}
+                                                className={clsx(
+                                                    "p-4 rounded-lg border text-left transition-all hover:scale-[1.02]",
+                                                    font.class, // APPLY FONT CLASS HERE TO CONTAINER
+                                                    currentFont === font.name
+                                                        ? "bg-primary/10 border-primary shadow-[0_0_15px_rgba(250,204,21,0.1)]"
+                                                        : "bg-secondary/10 border-border hover:bg-secondary/30 hover:border-primary/30"
+                                                )}
+                                            >
+                                                <div className="text-lg mb-1 text-foreground">Aa</div>
+                                                <div className={clsx("text-sm font-medium", currentFont === font.name ? "text-primary" : "text-foreground")}>{font.label}</div>
+                                                <div className="text-[10px] text-muted-foreground mt-1">The quick brown fox jumps over the lazy dog.</div>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </Card>

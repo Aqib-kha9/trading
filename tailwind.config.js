@@ -7,8 +7,20 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
+        sans: ['var(--font-primary)', 'sans-serif'],
+        outfit: ['Outfit', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        // New Fonts
+        inter: ['Inter', 'sans-serif'],
+        roboto: ['Roboto', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
+        lato: ['Lato', 'sans-serif'],
+        playfair: ['Playfair Display', 'serif'],
+        space: ['Space Grotesk', 'sans-serif'],
+        fira: ['Fira Code', 'monospace'],
+        oswald: ['Oswald', 'sans-serif'],
+        ubuntu: ['Ubuntu', 'sans-serif'],
       },
       colors: {
         background: "hsl(var(--background))",

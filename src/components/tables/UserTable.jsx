@@ -1,7 +1,5 @@
 import React from 'react';
-import { Eye, Edit, Ban, AlertTriangle, ShieldAlert } from 'lucide-react';
-import Button from '../ui/Button';
-import Badge from '../ui/Badge';
+import { Eye, Edit, Ban, AlertTriangle, ShieldAlert, UserCheck } from 'lucide-react';
 
 const UserTable = ({ users, onAction }) => {
     return (
@@ -14,21 +12,50 @@ const UserTable = ({ users, onAction }) => {
                     <thead className="bg-muted/50 sticky top-0 z-10 uppercase tracking-widest text-[9px] font-bold text-muted-foreground border-b border-border shadow-sm backdrop-blur-md">
                         <tr>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Client ID</th>
-                            <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">IP Address</th>
+                            <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Sub Broker</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Name / Contact</th>
                             <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Fund (Equity)</th>
-                            <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Margin Used</th>
-                            <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">P&L (Live)</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Plan</th>
+                            <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Start Date</th>
+                            <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Expiry Date</th>
+                            <th className="px-5 py-3 border-r border-border w-48 bg-muted/90 backdrop-blur-sm">Validity Progress</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Status</th>
                             <th className="px-5 py-3 text-center bg-muted/90 backdrop-blur-sm">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
                         {users.map((user) => {
-                            // Mock Calculation for Status
+                            // Status Logic
                             const isLiquidated = user.status === 'Liquidated';
                             const isBlocked = user.status === 'Blocked';
+
+                            // Sub Broker Badge Logic
+                            const isDirect = user.subBrokerId === 'DIRECT';
+
+                            // Validity Progress Logic
+                            const start = new Date(user.subscriptionStart);
+                            const end = new Date(user.subscriptionExpiry);
+                            const today = new Date();
+
+                            const totalTime = end - start;
+                            const timeElapsed = today - start;
+
+                            // Prevent negative progress or > 100%
+                            let percentage = (timeElapsed / totalTime) * 100;
+                            percentage = Math.max(0, Math.min(100, percentage));
+
+                            const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                            const isExpired = daysLeft < 0;
+
+                            const daysText = isExpired ? "Expired" : `${daysLeft} Days Left`;
+                            const daysColor = isExpired ? "text-red-500" : (daysLeft < 7 ? "text-red-400" : "text-emerald-500");
+                            const progressColor = isExpired ? "bg-red-500" : (daysLeft < 7 ? "bg-red-500" : "bg-emerald-500");
+
+                            // Date Format
+                            const formatDate = (dateString) => {
+                                const d = new Date(dateString);
+                                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                            };
 
                             return (
                                 <tr key={user.id} className="hover:bg-primary/[0.02] transition-colors group relative">
@@ -36,9 +63,15 @@ const UserTable = ({ users, onAction }) => {
                                         <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary/0 group-hover:bg-primary transition-colors"></div>
                                         {user.clientId}
                                     </td>
-                                    <td className="px-5 py-3 border-r border-white/5 font-mono text-[10px] text-muted-foreground">
-                                        {user.ip || '—'}
+
+                                    {/* Sub Broker Column */}
+                                    <td className="px-5 py-3 border-r border-white/5">
+                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded w-fit text-[9px] font-bold uppercase tracking-wider ${isDirect ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
+                                            <UserCheck size={10} />
+                                            {isDirect ? 'DIRECT' : user.subBrokerName?.split(' ')[0]}
+                                        </div>
                                     </td>
+
                                     <td className="px-5 py-3 border-r border-white/5 font-sans">
                                         <div className="flex flex-col">
                                             <span className="text-foreground font-semibold text-xs">{user.name}</span>
@@ -46,10 +79,6 @@ const UserTable = ({ users, onAction }) => {
                                         </div>
                                     </td>
                                     <td className="px-5 py-3 text-right border-r border-white/5 text-foreground/90 font-bold tracking-tight">₹{user.equity.toLocaleString()}</td>
-                                    <td className="px-5 py-3 text-right border-r border-white/5 text-muted-foreground/80 tracking-tight">₹{user.marginUsed.toLocaleString()}</td>
-                                    <td className={`px-5 py-3 text-right border-r border-white/5 font-bold tracking-tight ${user.pnl >= 0 ? 'text-emerald-500 text-shadow-emerald' : 'text-red-500 text-shadow-red'}`}>
-                                        {user.pnl >= 0 ? '+' : ''}₹{user.pnl.toLocaleString()}
-                                    </td>
                                     <td className="px-5 py-3 text-center border-r border-white/5">
                                         <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider ${user.plan === 'Gold' ? 'border-yellow-500/20 text-yellow-500 bg-yellow-500/5' :
                                             user.plan === 'Platinum' ? 'border-cyan-500/20 text-cyan-500 bg-cyan-500/5' :
@@ -59,6 +88,33 @@ const UserTable = ({ users, onAction }) => {
                                             {user.plan}
                                         </span>
                                     </td>
+
+                                    {/* Start Date */}
+                                    <td className="px-5 py-3 text-center border-r border-white/5 text-muted-foreground">
+                                        {formatDate(user.subscriptionStart)}
+                                    </td>
+
+                                    {/* Expiry Date */}
+                                    <td className="px-5 py-3 text-center border-r border-white/5 font-bold text-foreground">
+                                        {formatDate(user.subscriptionExpiry)}
+                                    </td>
+
+                                    {/* Validity Progress Bar */}
+                                    <td className="px-5 py-3 border-r border-white/5">
+                                        <div className="flex flex-col gap-1.5 w-full min-w-[140px]">
+                                            <div className="flex justify-between items-center text-[9px] uppercase font-bold">
+                                                <span className="text-muted-foreground">Active</span>
+                                                <span className={daysColor}>{daysText}</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </td>
+
                                     <td className="px-5 py-3 text-center border-r border-white/5">
                                         {isLiquidated ? (
                                             <span className="flex items-center justify-center gap-1.5 text-red-500 bg-red-500/5 border border-red-500/10 px-2 py-0.5 rounded text-[9px] font-bold uppercase animate-pulse">
@@ -72,6 +128,7 @@ const UserTable = ({ users, onAction }) => {
                                             </span>
                                         )}
                                     </td>
+
                                     <td className="px-3 py-3 text-center">
                                         <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                                             <button
@@ -97,13 +154,6 @@ const UserTable = ({ users, onAction }) => {
                                                     <ShieldAlert size={14} />
                                                 </button>
                                             )}
-                                            <button
-                                                title="Block Trade"
-                                                onClick={() => onAction('block', user)}
-                                                className="p-1.5 hover:bg-orange-500/10 hover:text-orange-500 text-muted-foreground rounded-md transition-all duration-200"
-                                            >
-                                                <Ban size={14} />
-                                            </button>
                                         </div>
                                     </td>
                                 </tr>

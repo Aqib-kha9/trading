@@ -5,13 +5,13 @@ import BrokerTable from '../../components/tables/BrokerTable';
 import Button from '../../components/ui/Button';
 import { clsx } from 'clsx';
 
-// Mock Data
+// Mock Data with Commission Type
 const MOCK_BROKERS = [
-    { id: 'BRK-001', name: 'Alpha Traders', location: 'Mumbai, MH', clients: 124, commission: 20, revenue: '₹ 5,40,000', status: 'Active' },
-    { id: 'BRK-002', name: 'West Coast Finserv', location: 'Pune, MH', clients: 85, commission: 15, revenue: '₹ 3,20,000', status: 'Active' },
-    { id: 'BRK-003', name: 'Skyline Capital', location: 'Delhi, DL', clients: 42, commission: 25, revenue: '₹ 1,80,000', status: 'Inactive' },
-    { id: 'BRK-004', name: 'Prime Invest', location: 'Bangalore, KA', clients: 210, commission: 18, revenue: '₹ 8,90,000', status: 'Active' },
-    { id: 'BRK-005', name: 'Rapid Growth', location: 'Hyderabad, TS', clients: 15, commission: 10, revenue: '₹ 45,000', status: 'Blocked' },
+    { id: 'BRK-001', name: 'Alpha Traders', location: 'Mumbai, MH', clients: 124, commission: { type: 'PERCENTAGE', value: 20 }, revenue: '₹ 5,40,000', status: 'Active' },
+    { id: 'BRK-002', name: 'West Coast Finserv', location: 'Pune, MH', clients: 85, commission: { type: 'FIXED', value: 500 }, revenue: '₹ 3,20,000', status: 'Active' },
+    { id: 'BRK-003', name: 'Skyline Capital', location: 'Delhi, DL', clients: 42, commission: { type: 'PERCENTAGE', value: 25 }, revenue: '₹ 1,80,000', status: 'Inactive' },
+    { id: 'BRK-004', name: 'Prime Invest', location: 'Bangalore, KA', clients: 210, commission: { type: 'PERCENTAGE', value: 18 }, revenue: '₹ 8,90,000', status: 'Active' },
+    { id: 'BRK-005', name: 'Rapid Growth', location: 'Hyderabad, TS', clients: 15, commission: { type: 'FIXED', value: 300 }, revenue: '₹ 45,000', status: 'Blocked' },
 ];
 
 const AllBrokers = () => {
@@ -28,7 +28,7 @@ const AllBrokers = () => {
         if (action === 'view') {
             navigate(`/brokers/details?id=${broker.id}`);
         } else if (action === 'edit') {
-            navigate(`/brokers/edit?id=${broker.id}`); // Assuming you might want an edit page later
+            navigate(`/brokers/edit?id=${broker.id}`);
         }
     };
 

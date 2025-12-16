@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical, CheckCircle, XCircle, Users, TrendingUp, AlertCircle } from 'lucide-react';
+import { MoreVertical, CheckCircle, XCircle, Users, TrendingUp, AlertCircle, Percent, DollarSign, IndianRupee } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const BrokerTable = ({ brokers, onAction }) => {
@@ -41,9 +41,18 @@ const BrokerTable = ({ brokers, onAction }) => {
                                         {broker.clients}
                                     </div>
                                 </td>
-                                <td className="px-5 py-3 border-r border-border text-center text-primary font-bold">
-                                    {broker.commission}%
+
+                                {/* Commission Column */}
+                                <td className="px-5 py-3 border-r border-border text-center">
+                                    <div className={clsx(
+                                        "inline-flex items-center gap-1 px-2 py-0.5 rounded font-bold uppercase",
+                                        broker.commission.type === 'PERCENTAGE' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                    )}>
+                                        {broker.commission.type === 'PERCENTAGE' ? <Percent size={10} /> : <IndianRupee size={10} />}
+                                        {broker.commission.value}{broker.commission.type === 'PERCENTAGE' ? '%' : ''}
+                                    </div>
                                 </td>
+
                                 <td className="px-5 py-3 border-r border-border text-center text-emerald-500 font-bold">
                                     {broker.revenue}
                                 </td>

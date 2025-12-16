@@ -3,7 +3,7 @@ import {
     Calendar as CalendarIcon, Filter, Check,
     TrendingUp, TrendingDown, AlignLeft,
     Activity, Clock, Globe, X, Search, ChevronRight,
-    ChevronLeft, ChevronDown, CalendarDays
+    ChevronLeft, ChevronDown, CalendarDays, ExternalLink, FileText, BarChart
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
@@ -50,15 +50,43 @@ const MOCK_EVENTS = [
     // Today: Mon Dec 15
     {
         id: 1, dateIso: '2025-12-15', time: '14:02', currency: 'NZD', impact: 'low',
-        event: 'BusinessNZ Services Index', detail: 'Actual: 46.9',
-        actual: '46.9', forecast: '', previous: '48.4',
-        graphData: [48, 47, 49, 46.9, 47.5, 48]
+        event: 'FPI m/m', detail: 'Food Price Index',
+        actual: '-0.4%', forecast: '-0.3%', previous: '-0.3%',
+        graphData: [0.5, 1.2, 0.7, 0.3, -0.4, -0.3],
+        specs: {
+            source: { name: 'Statistics New Zealand', url: '#' },
+            measures: 'Change in the price of food and food services purchased by households;',
+            effect: "'Actual' greater than 'Forecast' is good for currency;",
+            frequency: 'Released monthly, about 13 days after the month ends;',
+            nextRelease: 'Jan 16, 2026',
+            whyCare: 'Although food is among the most volatile consumer price components, this indicator garners some attention because New Zealand\'s major inflation data is released on a quarterly basis;',
+            acronym: 'Food Price Index (FPI);'
+        },
+        history: [
+            { date: 'Nov 17, 2025', actual: '-0.3%', forecast: '-0.4%', previous: '0.5%' },
+            { date: 'Oct 16, 2025', actual: '-0.4%', forecast: '0.3%', previous: '0.7%' },
+            { date: 'Sep 16, 2025', actual: '0.3%', forecast: '0.7%', previous: '1.2%' },
+            { date: 'Aug 15, 2025', actual: '0.7%', forecast: '1.2%', previous: '0.5%' },
+            { date: 'Jul 17, 2025', actual: '1.2%', forecast: '0.5%', previous: '0.2%' }
+        ],
+        stories: [
+            { title: 'NZ selected price indexes: November 2025', source: 'stats.govt.nz', time: '14 hr ago', desc: 'Selected price indexes (SPI) provide monthly price changes for a selection of goods and services that New Zealand households...' }
+        ]
     },
     {
         id: 2, dateIso: '2025-12-15', time: '15:20', currency: 'JPY', impact: 'low',
         event: 'Tankan Manufacturing Index', detail: 'Survey of manufacturing sentiment',
         actual: '15', forecast: '15', previous: '14',
-        graphData: [12, 13, 14, 15, 14.5, 15]
+        graphData: [12, 13, 14, 15, 14.5, 15],
+        specs: {
+            source: { name: 'Bank of Japan', url: '#' },
+            measures: 'Level of a diffusion index based on surveyed manufacturers;',
+            effect: "'Actual' greater than 'Forecast' is good for currency;",
+            frequency: 'Released quarterly, about 14 days before the quarter ends;',
+            whyCare: 'It\'s a leading indicator of economic health because businesses react quickly to market conditions, and their purchasing managers hold perhaps the most current and relevant insight into the company\'s view of the economy;',
+        },
+        history: [],
+        stories: []
     },
     {
         id: 3, dateIso: '2025-12-15', time: '15:20', currency: 'JPY', impact: 'medium',
@@ -71,20 +99,53 @@ const MOCK_EVENTS = [
         event: 'Industrial Production y/y', detail: 'Measures change in output of factories',
         actual: '4.8%', forecast: '5.0%', previous: '4.9%',
         isHot: true,
-        graphData: [4.5, 4.6, 4.9, 4.8, 5.1, 4.8]
+        graphData: [4.5, 4.6, 4.9, 4.8, 5.1, 4.8],
+        specs: {
+            source: { name: 'National Bureau of Statistics of China', url: '#' },
+            measures: 'Change in the total inflation-adjusted value of output produced by manufacturers, mines, and utilities;',
+            effect: "'Actual' greater than 'Forecast' is good for currency;",
+            frequency: 'Released monthly, about 15 days after the month ends;',
+            whyCare: 'It\'s a leading indicator of economic health - production is the dominant driver of the economy and reacts quickly to ups and downs in the business cycle;',
+        },
+        history: [],
+        stories: []
     },
     {
         id: 5, dateIso: '2025-12-15', time: '17:00', currency: 'CNY', impact: 'high',
         event: 'Retail Sales y/y', detail: 'Primary gauge of consumer spending',
         actual: '1.3%', forecast: '3.0%', previous: '2.9%',
         impactType: 'negative',
-        graphData: [2.5, 2.8, 2.9, 1.3, 3.1, 1.5]
+        graphData: [2.5, 2.8, 2.9, 1.3, 3.1, 1.5],
+        specs: {
+            source: { name: 'National Bureau of Statistics of China', url: '#' },
+            measures: 'Change in the total value of sales at the retail level;',
+            effect: "'Actual' greater than 'Forecast' is good for currency;",
+            frequency: 'Released monthly, about 15 days after the month ends;',
+            whyCare: 'It\'s the primary gauge of consumer spending, which accounts for the majority of overall economic activity;',
+        },
+        history: [],
+        stories: []
     },
     {
         id: 8, dateIso: '2025-12-15', time: '19:30', currency: 'USD', impact: 'high',
         event: 'Core CPI m/m', detail: 'The big one - Excludes food and energy',
         actual: '', forecast: '0.3%', previous: '0.2%', pending: true,
-        graphData: [0.3, 0.4, 0.2, 0.3, 0.2, 0.3]
+        graphData: [0.3, 0.4, 0.2, 0.3, 0.2, 0.3],
+        specs: {
+            source: { name: 'Bureau of Labor Statistics', url: '#' },
+            measures: 'Change in the price of goods and services purchased by consumers, excluding food and energy;',
+            effect: "'Actual' greater than 'Forecast' is good for currency;",
+            frequency: 'Released monthly, about 16 days after the month ends;',
+            nextRelease: 'Jan 13, 2026',
+            whyCare: 'Consumer prices account for a majority of overall inflation. Inflation is important to currency valuation because rising prices lead the central bank to raise interest rates out of respect for their inflation containment mandate;',
+            acronym: 'Consumer Price Index (CPI);'
+        },
+        history: [
+            { date: 'Nov 14, 2025', actual: '0.3%', forecast: '0.3%', previous: '0.2%' },
+            { date: 'Oct 12, 2025', actual: '0.2%', forecast: '0.2%', previous: '0.3%' },
+            { date: 'Sep 14, 2025', actual: '0.3%', forecast: '0.3%', previous: '0.2%' },
+        ],
+        stories: []
     },
 
     // Tomorrow: Tue Dec 16
@@ -109,6 +170,142 @@ const MOCK_EVENTS = [
         graphData: null
     },
 ];
+
+// --- Detail Panel Component ---
+
+const CalendarDetailPanel = ({ event }) => {
+    if (!event.specs && !event.history) return null;
+
+    return (
+        <div className="bg-muted/30 border-t border-b border-border p-4 animate-in slide-in-from-top-2 duration-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left: Specs */}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-border pb-1 mb-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Specs</span>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <span className="opacity-70">© Fair Economy</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                        {event.specs?.source && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <span className="font-bold text-muted-foreground">Source</span>
+                                <a href={event.specs.source.url} className="text-primary hover:underline flex items-center gap-1">
+                                    {event.specs.source.name} <ExternalLink size={10} />
+                                </a>
+                            </div>
+                        )}
+                        {event.specs?.measures && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <span className="font-bold text-muted-foreground">Measures</span>
+                                <span className="text-foreground/90">{event.specs.measures}</span>
+                            </div>
+                        )}
+                        {event.specs?.effect && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <span className="font-bold text-muted-foreground">Usual Effect</span>
+                                <span className="text-foreground/90 italic">{event.specs.effect}</span>
+                            </div>
+                        )}
+                        {event.specs?.frequency && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <span className="font-bold text-muted-foreground">Frequency</span>
+                                <span className="text-foreground/90">{event.specs.frequency}</span>
+                            </div>
+                        )}
+                        {event.specs?.nextRelease && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <span className="font-bold text-muted-foreground">Next Release</span>
+                                <a href="#" className="text-primary hover:underline">{event.specs.nextRelease}</a>
+                            </div>
+                        )}
+                        {event.specs?.whyCare && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2 mt-2 pt-2 border-t border-border">
+                                <span className="font-bold text-muted-foreground">Why Traders Care</span>
+                                <span className="text-foreground/90 leading-relaxed">{event.specs.whyCare}</span>
+                            </div>
+                        )}
+                        {event.specs?.acronym && (
+                            <div className="grid grid-cols-[100px_1fr] gap-2">
+                                <span className="font-bold text-muted-foreground">Acro Expand</span>
+                                <span className="text-foreground/90">{event.specs.acronym}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="pt-2">
+                        <button className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline">
+                            <FileText size={12} /> View full details for {event.currency} {event.event}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Right: History & Stories */}
+                <div className="space-y-6">
+                    {/* History Table */}
+                    <div>
+                        <div className="flex items-center justify-between border-b border-border pb-1 mb-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">History</span>
+                            <div className="grid grid-cols-3 gap-8 text-[10px] font-bold text-muted-foreground mr-2">
+                                <span className="text-right">Actual</span>
+                                <span className="text-right">Forecast</span>
+                                <span className="text-right">Previous</span>
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            {event.history?.length > 0 ? event.history.map((h, i) => (
+                                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-dashed border-border last:border-0 hover:bg-white/5 transition-colors rounded px-1">
+                                    <span className="text-primary font-medium hover:underline cursor-pointer">{h.date}</span>
+                                    <div className="grid grid-cols-3 gap-8 font-mono text-right mr-1">
+                                        <span className="font-bold text-foreground">{h.actual}</span>
+                                        <span className="text-muted-foreground">{h.forecast || '-'}</span>
+                                        <span className="text-muted-foreground">{h.previous}</span>
+                                    </div>
+                                </div>
+                            )) : (
+                                <div className="text-center py-4 text-xs text-muted-foreground italic">No history available</div>
+                            )}
+                            <div className="flex justify-between items-center mt-2 text-[10px]">
+                                <button className="text-muted-foreground hover:text-primary flex items-center gap-1"><ChevronDown size={10} /> More</button>
+                                <button className="text-muted-foreground hover:text-primary flex items-center gap-1">Graph <BarChart size={10} /></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stories */}
+                    {event.stories?.length > 0 && (
+                        <div>
+                            <div className="flex items-center justify-between border-b border-border pb-1 mb-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Related Stories</span>
+                            </div>
+                            <div className="space-y-3">
+                                {event.stories.map((story, i) => (
+                                    <div key={i} className="flex gap-3 bg-muted/20 p-2 rounded border border-border">
+                                        <div className="shrink-0 pt-0.5">
+                                            <FileText size={16} className="text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                            <a href="#" className="text-xs font-bold text-primary hover:underline block mb-1">{story.title}</a>
+                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1">
+                                                <span className="bg-yellow-500/10 text-yellow-500 px-1 rounded">News</span>
+                                                <span>From {story.source}</span>
+                                                <span>•</span>
+                                                <span>{story.time}</span>
+                                            </div>
+                                            <p className="text-[11px] text-foreground/80 leading-snug line-clamp-2">{story.desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const MiniGraph = ({ data }) => {
     if (!data) return <div className="w-12 h-6 bg-white/5 rounded"></div>;
@@ -402,6 +599,13 @@ const CalendarPage = () => {
     // id: 'thisWeek', label: 'Dec 15 - Dec 21'
     const [selectedDateRange, setSelectedDateRange] = useState({ id: 'thisWeek', label: 'This Week (Dec 15-21)' });
 
+    // Expanded Row State
+    const [expandedId, setExpandedId] = useState(null);
+
+    const toggleExpand = (id) => {
+        setExpandedId(prev => prev === id ? null : id);
+    };
+
     // Helper to format date header
     const formatDate = (dateIso) => {
         const d = new Date(dateIso);
@@ -529,68 +733,82 @@ const CalendarPage = () => {
                             </div>
 
                             {groupedEvents[dateIso].map((event) => (
-                                <div key={event.id} className="grid grid-cols-12 gap-2 p-3 text-[11px] items-center border-b border-white/5 hover:bg-white/5 transition-colors group">
-
-                                    {/* Time */}
-                                    <div className="col-span-2 md:col-span-1 pl-2 font-mono text-slate-300 border-l-2 border-transparent group-hover:border-primary pl-2 transition-all">
-                                        {event.time}
-                                    </div>
-
-                                    {/* Currency */}
+                                <div key={event.id} className="flex flex-col border-b border-white/5">
                                     <div
-                                        className="col-span-1 text-center font-bold text-slate-200 cursor-help"
-                                        title={CURRENCY_NAMES[event.currency] || event.currency}
-                                    >
-                                        {event.currency}
-                                    </div>
-
-                                    {/* Impact Icon */}
-                                    <div
-                                        className="col-span-1 flex justify-center cursor-help"
-                                        title={(IMPACT_LEVELS.find(i => i.id === event.impact) || {}).label + " Impact"}
-                                    >
-                                        <div className={clsx(
-                                            "w-4 h-4 rounded shadow-sm border border-black/20",
-                                            (IMPACT_LEVELS.find(i => i.id === event.impact) || {}).color
-                                        )}></div>
-                                    </div>
-
-                                    {/* Event Name */}
-                                    <div
-                                        className="col-span-4 md:col-span-5 font-medium text-slate-300 truncate pr-2 cursor-help"
-                                        title={event.detail || event.event}
-                                    >
-                                        {event.event}
-                                    </div>
-
-                                    {/* Actual */}
-                                    <div
+                                        onClick={() => toggleExpand(event.id)}
                                         className={clsx(
-                                            "col-span-1 text-right font-mono font-bold cursor-help",
-                                            event.pending ? "text-slate-600" : (
-                                                event.impactType === 'positive' ? "text-emerald-500" :
-                                                    event.impactType === 'negative' ? "text-red-500" : "text-slate-200"
-                                            )
+                                            "grid grid-cols-12 gap-2 p-3 text-[11px] items-center transition-colors cursor-pointer select-none",
+                                            expandedId === event.id ? "bg-white/5" : "hover:bg-white/5"
                                         )}
-                                        title="Actual Value"
                                     >
-                                        {event.actual || '-'}
+
+                                        {/* Time */}
+                                        <div className="col-span-2 md:col-span-1 pl-2 font-mono text-slate-300 border-l-2 border-transparent group-hover:border-primary pl-2 transition-all flex items-center gap-2">
+                                            {event.time}
+                                            {expandedId === event.id && <ChevronDown size={10} className="text-primary" />}
+                                        </div>
+
+                                        {/* Currency */}
+                                        <div
+                                            className="col-span-1 text-center font-bold text-slate-200"
+                                            title={CURRENCY_NAMES[event.currency] || event.currency}
+                                        >
+                                            {event.currency}
+                                        </div>
+
+                                        {/* Impact Icon */}
+                                        <div
+                                            className="col-span-1 flex justify-center"
+                                            title={(IMPACT_LEVELS.find(i => i.id === event.impact) || {}).label + " Impact"}
+                                        >
+                                            <div className={clsx(
+                                                "w-4 h-4 rounded shadow-sm border border-black/20",
+                                                (IMPACT_LEVELS.find(i => i.id === event.impact) || {}).color
+                                            )}></div>
+                                        </div>
+
+                                        {/* Event Name */}
+                                        <div
+                                            className="col-span-4 md:col-span-5 font-medium text-slate-300 truncate pr-2"
+                                            title={event.detail || event.event}
+                                        >
+                                            {event.event}
+                                        </div>
+
+                                        {/* Actual */}
+                                        <div
+                                            className={clsx(
+                                                "col-span-1 text-right font-mono font-bold",
+                                                event.pending ? "text-slate-600" : (
+                                                    event.impactType === 'positive' ? "text-emerald-500" :
+                                                        event.impactType === 'negative' ? "text-red-500" : "text-slate-200"
+                                                )
+                                            )}
+                                            title="Actual Value"
+                                        >
+                                            {event.actual || '-'}
+                                        </div>
+
+                                        {/* Forecast */}
+                                        <div className="col-span-1 text-right font-mono text-slate-500" title="Forecast">
+                                            {event.forecast || '-'}
+                                        </div>
+
+                                        {/* Previous */}
+                                        <div className="col-span-1 text-right font-mono text-slate-500" title="Previous">
+                                            {event.previous || '-'}
+                                        </div>
+
+                                        {/* Graph */}
+                                        <div className="col-span-1 flex justify-center opacity-50 hover:opacity-100 transition-opacity">
+                                            <MiniGraph data={event.graphData} />
+                                        </div>
                                     </div>
 
-                                    {/* Forecast */}
-                                    <div className="col-span-1 text-right font-mono text-slate-500 cursor-help" title="Forecast">
-                                        {event.forecast || '-'}
-                                    </div>
-
-                                    {/* Previous */}
-                                    <div className="col-span-1 text-right font-mono text-slate-500 cursor-help" title="Previous">
-                                        {event.previous || '-'}
-                                    </div>
-
-                                    {/* Graph */}
-                                    <div className="col-span-1 flex justify-center opacity-50 group-hover:opacity-100 transition-opacity">
-                                        <MiniGraph data={event.graphData} />
-                                    </div>
+                                    {/* EXPANDED DETAIL VIEW */}
+                                    {expandedId === event.id && (
+                                        <CalendarDetailPanel event={event} />
+                                    )}
                                 </div>
                             ))}
                         </div>

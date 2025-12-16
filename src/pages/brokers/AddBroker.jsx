@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Upload, User, Mail, Phone, Briefcase, MapPin, Percent } from 'lucide-react';
+import { ArrowLeft, Save, Upload, User, Mail, Phone, Briefcase, MapPin, Percent, DollarSign, IndianRupee } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { clsx } from 'clsx';
 
 const AddBroker = () => {
     const navigate = useNavigate();
+    const [commissionType, setCommissionType] = useState('PERCENTAGE'); // 'PERCENTAGE' or 'FIXED'
     const [formData, setFormData] = useState({
         name: '', email: '', phone: '', company: '',
         location: '', commission: '20',
@@ -18,7 +20,14 @@ const AddBroker = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         // Mock API call simulation
-        console.log("Onboarding Broker:", formData);
+        const finalData = {
+            ...formData,
+            commission: {
+                type: commissionType,
+                value: formData.commission
+            }
+        };
+        console.log("Onboarding Broker:", finalData);
         navigate('/brokers/all');
     };
 
@@ -131,22 +140,49 @@ const AddBroker = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Commission */}
                         <div className="space-y-2">
-                            <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                                <Percent size={12} /> Commission Share (%)
-                            </label>
+                            <div className="flex justify-between items-center">
+                                <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                                    {commissionType === 'PERCENTAGE' ? <Percent size={12} /> : <IndianRupee size={12} />}
+                                    Commission Model
+                                </label>
+                                {/* Type Toggle */}
+                                <div className="flex bg-white/5 rounded-md p-0.5 border border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={() => setCommissionType('PERCENTAGE')}
+                                        className={clsx("px-2 py-0.5 text-[10px] uppercase font-bold rounded transition-colors", commissionType === 'PERCENTAGE' ? "bg-primary text-black" : "text-muted-foreground hover:text-white")}
+                                    >
+                                        % Percent
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCommissionType('FIXED')}
+                                        className={clsx("px-2 py-0.5 text-[10px] uppercase font-bold rounded transition-colors", commissionType === 'FIXED' ? "bg-primary text-black" : "text-muted-foreground hover:text-white")}
+                                    >
+                                        Fixed
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="relative">
+                                {commissionType === 'FIXED' && <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-bold">₹</span>}
                                 <input
                                     required
                                     type="number"
                                     name="commission"
                                     value={formData.commission}
                                     onChange={handleChange}
-                                    placeholder="20"
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg h-10 pl-3 pr-10 text-sm focus:border-primary/50 focus:outline-none transition-colors font-mono"
+                                    placeholder={commissionType === 'PERCENTAGE' ? "20" : "5000"}
+                                    className={clsx(
+                                        "w-full bg-white/5 border border-white/10 rounded-lg h-10 text-sm focus:border-primary/50 focus:outline-none transition-colors font-mono",
+                                        commissionType === 'FIXED' ? "pl-8 pr-3" : "pl-3 pr-10"
+                                    )}
                                 />
-                                <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-bold">%</span>
+                                {commissionType === 'PERCENTAGE' && <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-bold">%</span>}
                             </div>
-                            <p className="text-[10px] text-muted-foreground">Percentage of revenue shared with the broker.</p>
+                            <p className="text-[10px] text-muted-foreground">
+                                {commissionType === 'PERCENTAGE' ? "Percentage of revenue shared with the broker." : "Fixed amount paid per client acquisition."}
+                            </p>
                         </div>
 
                         {/* Agreement Doc */}
