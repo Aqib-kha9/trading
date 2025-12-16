@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../theme-provider';
+import TickerMarquee from './TickerMarquee';
 
 const Header = ({ onMenuClick }) => {
     const dispatch = useDispatch();
@@ -33,10 +34,9 @@ const Header = ({ onMenuClick }) => {
 
                 <div className="h-4 w-[1px] bg-white/10 mx-2 hidden md:block"></div>
 
-                {/* Quick Ticker Inline */}
-                <div className="hidden md:flex items-center gap-4 text-[10px] font-mono font-medium">
-                    <span className="text-emerald-400 flex items-center gap-1.5 bg-emerald-400/5 px-2 py-0.5 rounded-md border border-emerald-400/10">NIFTY <span className="text-white font-bold">21,450.50</span> ▲0.4%</span>
-                    <span className="text-red-400 flex items-center gap-1.5 bg-red-400/5 px-2 py-0.5 rounded-md border border-red-400/10">BANKNIFTY <span className="text-white font-bold">47,800.00</span> ▼0.2%</span>
+                {/* Quick Ticker Inline - Floating */}
+                <div className="hidden md:flex items-center overflow-hidden w-[400px] mask-linear-fade relative h-full">
+                    <TickerMarquee />
                 </div>
             </div>
 

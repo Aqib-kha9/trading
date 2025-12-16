@@ -354,4 +354,13 @@
   .text-glow-sm {
     text-shadow: 0 0 5px currentColor;
   }
+
+  .mask-linear-fade {
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  }
+
+  .pause {
+    animation-play-state: paused;
+  }
 }
