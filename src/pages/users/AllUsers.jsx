@@ -19,7 +19,7 @@ const MOCK_USERS = [
     },
     {
         id: 3, clientId: 'MS-1003', name: 'Sneha Gupta', email: 'sneha@example.com', ip: '172.16.0.23',
-        equity: 500000, marginUsed: 120000, pnl: 45000, plan: 'NFT Segment', status: 'Active',
+        equity: 500000, marginUsed: 120000, pnl: 45000, plan: 'Equity Segment', status: 'Active',
         subBrokerId: 'SB002', subBrokerName: 'Priya Patel', subscriptionStart: '2025-12-10', subscriptionExpiry: '2026-03-10'
     },
     {

@@ -21,41 +21,40 @@ const Header = ({ onMenuClick }) => {
         <div className="h-8 bg-card border-b border-border flex items-center justify-between px-2 sticky top-0 z-50">
 
             {/* Left: Branding & Search */}
-            <div className="flex items-center gap-3">
-                <button onClick={onMenuClick} className="md:hidden text-muted-foreground hover:text-foreground">
-                    <Menu size={14} />
+            <div className="flex items-center gap-2 shrink-0">
+                <button onClick={onMenuClick} className="md:hidden text-muted-foreground hover:text-foreground p-1">
+                    <Menu size={16} />
                 </button>
+            </div>
 
-
-                {/* Quick Ticker Inline - Floating */}
-                <div className="hidden md:flex items-center overflow-hidden md:w-[100px] lg:w-[450px] xl:w-[550px] 2xl:w-[750px] mask-linear-fade relative h-full">
-                    <TickerMarquee />
-                </div>
+            {/* Quick Ticker Inline - Floating (Fills remaining space) */}
+            <div className="flex-1 min-w-0 mx-2 md:mx-4 overflow-hidden mask-linear-fade relative h-full flex items-center">
+                <TickerMarquee />
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
                 {/* Unified Search Bar */}
-                <div className="relative group hidden md:block">
-                    <Search className="absolute left-2.5 top-2 text-muted-foreground" size={12} />
+                <div className="relative group">
+                    <Search className="md:absolute md:left-2.5 md:top-2 text-muted-foreground cursor-pointer md:cursor-text" size={14} />
                     <input
                         type="text"
                         placeholder="Search (CMD+K)"
-                        className="bg-secondary/30 border border-white/5 h-6 pl-8 pr-3 w-48 text-[11px] font-medium rounded-lg focus:border-primary/50 focus:bg-secondary/50 focus:outline-none focus:ring-0 transition-all placeholder:text-muted-foreground/50"
+                        className="hidden md:block bg-secondary/30 border border-white/5 h-6 pl-8 pr-3 w-32 lg:w-48 text-[11px] font-medium rounded-lg focus:border-primary/50 focus:bg-secondary/50 focus:outline-none focus:ring-0 transition-all placeholder:text-muted-foreground/50"
                     />
                 </div>
 
-                <div className="h-4 w-[1px] bg-white/10 mx-1"></div>
+                <div className="h-4 w-[1px] bg-white/10 mx-1 hidden sm:block"></div>
 
                 <button
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                    className="p-2 text-muted-foreground hover:text-primary hover:bg-white/5 rounded-lg transition-all"
+                    className="p-1.5 text-muted-foreground hover:text-primary hover:bg-white/5 rounded-lg transition-all"
                     title="Toggle Theme"
                 >
                     {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
                 </button>
 
-                <button className="relative p-2 text-muted-foreground hover:text-primary hover:bg-white/5 rounded-lg transition-all">
+                <button className="relative p-1.5 text-muted-foreground hover:text-primary hover:bg-white/5 rounded-lg transition-all">
                     <Bell size={14} />
                     <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-[#050505]"></span>
                 </button>

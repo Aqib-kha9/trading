@@ -10,7 +10,7 @@ import ActiveSubscriptionsTable from '../../components/tables/ActiveSubscription
 const MOCK_TRANSACTIONS = [
     { id: 'TXN-8842', user: 'Rajesh Kumar', plan: 'Options Segment', amount: '₹25,000', date: '12 Jan 2024', status: 'Success' },
     { id: 'TXN-8841', user: 'Amit Singh', plan: 'Forex Segment', amount: '₹25,000', date: '12 Jan 2024', status: 'Failed' },
-    { id: 'TXN-8840', user: 'Sneha Gupta', plan: 'NFT Segment', amount: '₹25,000', date: '11 Jan 2024', status: 'Success' },
+    { id: 'TXN-8840', user: 'Sneha Gupta', plan: 'Equity Segment', amount: '₹25,000', date: '11 Jan 2024', status: 'Success' },
     { id: 'TXN-8839', user: 'Vijay Inte', plan: 'Comodity Segment', amount: '₹25,000', date: '11 Jan 2024', status: 'Success' },
     { id: 'TXN-8838', user: 'Priya Sharma', plan: 'Crypto Segment', amount: '₹25,000', date: '10 Jan 2024', status: 'Success' },
 ];
@@ -18,7 +18,7 @@ const MOCK_TRANSACTIONS = [
 // Mock Data for Active Subscriptions
 const MOCK_ACTIVE_SUBS = [
     { userId: 'MS-1001', user: 'Rajesh Kumar', plan: 'Options Segment', startDate: '01 Jan 2024', expiryDate: '31 Jan 2024', daysRemaining: 20 },
-    { userId: 'MS-1003', user: 'Sneha Gupta', plan: 'NFT Segment', startDate: '15 Dec 2023', expiryDate: '15 Mar 2024', daysRemaining: 85 },
+    { userId: 'MS-1003', user: 'Sneha Gupta', plan: 'Equity Segment', startDate: '15 Dec 2023', expiryDate: '15 Mar 2024', daysRemaining: 85 },
     { userId: 'MS-1005', user: 'Priya Sharma', plan: 'Comodity Segment', startDate: '10 Jan 2024', expiryDate: '10 Feb 2024', daysRemaining: 29 },
     { userId: 'MS-1008', user: 'Vikram Singh', plan: 'Forex Segment', startDate: '20 Dec 2023', expiryDate: '04 Jan 2024', daysRemaining: 3 },
 ];

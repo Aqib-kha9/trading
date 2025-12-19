@@ -9,7 +9,7 @@ import { clsx } from 'clsx';
 
 // Mock Data for Plans
 const MOCK_PLANS = [
-    { id: 'PLN-001', name: 'NFT Segment', price: 25000, validity_days: 30, isDemo: false, features: ['NFT specific signals', 'Priority Support'] },
+    { id: 'PLN-001', name: 'Equity Segment', price: 25000, validity_days: 30, isDemo: false, features: ['Equity specific signals', 'Priority Support'] },
     { id: 'PLN-002', name: 'Options Segment', price: 25000, validity_days: 30, isDemo: false, features: ['BankNifty/Nifty Options', 'Live Market Updates'] },
     { id: 'PLN-003', name: 'Crypto Segment', price: 25000, validity_days: 30, isDemo: false, features: ['Major Crypto Pairs', '24/7 Alerts'] },
     { id: 'PLN-004', name: 'Forex Segment', price: 25000, validity_days: 30, isDemo: false, features: ['Major Forex Pairs', 'News Events'] },

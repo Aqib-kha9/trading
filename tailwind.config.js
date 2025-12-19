@@ -43,12 +43,12 @@ export default {
       },
       animation: {
         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'marquee': 'marquee 25s linear infinite',
+        'marquee': 'marquee 35s linear infinite',
       },
       keyframes: {
         marquee: {
-          '0%': { transform: 'translateX(-25%)' },
-          '100%': { transform: 'translateX(0%)' },
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
         },
       },
       backgroundImage: {
