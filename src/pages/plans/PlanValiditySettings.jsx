@@ -1,8 +1,69 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import useToast from '../../hooks/useToast';
+import { Loader2 } from 'lucide-react';
 
 const PlanValiditySettings = ({ isEmbedded = false }) => {
+    const toast = useToast();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [settings, setSettings] = useState({
+        gracePeriod: 24,
+        reminderDays: 3
+    });
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const { getSetting } = await import('../../api/settings.api');
+                const { data } = await getSetting('planValidity');
+                if (data && data.value) {
+                    setSettings(data.value);
+                }
+            } catch (error) {
+                console.error("Failed to load settings", error);
+                // Silent fail or toast? keeping silent for default values fallback
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadSettings();
+    }, []);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setSettings(prev => ({
+            ...prev,
+            [name]: parseInt(value) || 0
+        }));
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const { updateSetting } = await import('../../api/settings.api');
+            await updateSetting('planValidity', {
+                value: settings,
+                description: 'Global plan validity configuration'
+            });
+            toast.success('Validity settings updated successfully');
+        } catch (error) {
+            console.error("Failed to save settings", error);
+            toast.error('Failed to update settings');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-48">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     return (
         <div className={!isEmbedded ? "max-w-3xl mx-auto space-y-6" : "space-y-6"}>
             {!isEmbedded && (
@@ -17,13 +78,25 @@ const PlanValiditySettings = ({ isEmbedded = false }) => {
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Grace Period (Hours)</label>
                         <p className="text-xs text-muted-foreground mb-2">Time allowed after expiry before service cuts off</p>
-                        <input type="number" defaultValue="24" className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary/50 focus:outline-none transition-colors" />
+                        <input
+                            name="gracePeriod"
+                            type="number"
+                            value={settings.gracePeriod}
+                            onChange={handleChange}
+                            className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary/50 focus:outline-none transition-colors"
+                        />
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pre-Expiry Reminder (Days)</label>
                         <p className="text-xs text-muted-foreground mb-2">When to start sending renewal notifications</p>
-                        <input type="number" defaultValue="3" className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary/50 focus:outline-none transition-colors" />
+                        <input
+                            name="reminderDays"
+                            type="number"
+                            value={settings.reminderDays}
+                            onChange={handleChange}
+                            className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary/50 focus:outline-none transition-colors"
+                        />
                     </div>
 
                     <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
@@ -34,7 +107,18 @@ const PlanValiditySettings = ({ isEmbedded = false }) => {
                     </div>
 
                     <div className="pt-4 flex justify-end">
-                        <Button variant="primary">Save Configuration</Button>
+                        <Button
+                            variant="primary"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="w-full sm:w-auto"
+                        >
+                            {isSaving ? (
+                                <><Loader2 size={16} className="animate-spin mr-2" /> Saving...</>
+                            ) : (
+                                'Save Configuration'
+                            )}
+                        </Button>
                     </div>
                 </div>
             </Card>

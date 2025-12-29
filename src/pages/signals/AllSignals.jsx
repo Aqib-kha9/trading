@@ -6,33 +6,39 @@ import Button from '../../components/ui/Button';
 import { clsx } from 'clsx';
 import SignalConfiguration from './SignalConfiguration';
 
-// Mock Data
-const MOCK_SIGNALS = [
-    { id: 'SIG-1001', symbol: 'NIFTY 50', type: 'BUY', entry: '21500', stoploss: '21450', status: 'Active', timestamp: '2024-01-12T10:30:00' },
-    { id: 'SIG-1002', symbol: 'BANKNIFTY', type: 'SELL', entry: '47800', stoploss: '47900', status: 'Active', timestamp: '2024-01-12T09:15:00' }, // Status changed from Target Hit to Active/Stoploss Hit as Target is gone
-    { id: 'SIG-1003', symbol: 'RELIANCE', type: 'BUY', entry: '2600', stoploss: '2580', status: 'Stoploss Hit', timestamp: '2024-01-11T14:20:00' },
-    { id: 'SIG-1004', symbol: 'HDFCBANK', type: 'BUY', entry: '1650', stoploss: '1640', status: 'Active', timestamp: '2024-01-12T11:00:00' },
-];
-
-const MOCK_HISTORY = [
-    { id: 'SIG-0998', symbol: 'TATASTEEL', type: 'BUY', entry: '135', stoploss: '132', status: 'Closed', timestamp: '2024-01-10T09:30:00' },
-    { id: 'SIG-0997', symbol: 'INFY', type: 'SELL', entry: '1520', stoploss: '1540', status: 'Stoploss Hit', timestamp: '2024-01-09T10:00:00' },
-    { id: 'SIG-0996', symbol: 'NIFTY 50', type: 'BUY', entry: '21400', stoploss: '21350', status: 'Closed', timestamp: '2024-01-08T11:45:00' },
-];
-
 const AllSignals = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
     const [activeTab, setActiveTab] = useState('live'); // live, history, config
 
+    const [signals, setSignals] = useState([]);
+    const [history, setHistory] = useState([]);
+
+    // Fetch signals on mount
+    React.useEffect(() => {
+        const loadSignals = async () => {
+            try {
+                // Using dynamic import to avoid hoisting issues with circular deps if any
+                const { fetchSignals } = await import('../../api/signals.api');
+                const { data } = await fetchSignals();
+                // Naive separation: Active vs Others
+                setSignals(data.filter(s => s.status === 'Active'));
+                setHistory(data.filter(s => s.status !== 'Active'));
+            } catch (e) {
+                console.error("Failed to load signals", e);
+            }
+        };
+        loadSignals();
+    }, []);
+
     const getFilteredData = (data) => data.filter(sig =>
         (filter === 'All' || sig.status === filter) &&
         (sig.symbol.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    const filteredSignals = getFilteredData(MOCK_SIGNALS);
-    const filteredHistory = getFilteredData(MOCK_HISTORY);
+    const filteredSignals = getFilteredData(signals);
+    const filteredHistory = getFilteredData(history);
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -136,10 +142,10 @@ const AllSignals = () => {
 
                         {/* Footer Stats */}
                         <div className="h-9 bg-muted/30 border border-border rounded-lg flex items-center justify-between px-4 text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
-                            <div>Total Signals: <span className="text-foreground font-bold">{MOCK_SIGNALS.length}</span></div>
+                            <div>Total Signals: <span className="text-foreground font-bold">{signals.length}</span></div>
                             <div className="flex gap-6">
                                 <span>Success Rate: <span className="text-emerald-500 font-bold">85%</span></span>
-                                <span>Active Positions: <span className="text-blue-500 font-bold">2</span></span>
+                                <span>Active Positions: <span className="text-blue-500 font-bold">{signals.length}</span></span>
                             </div>
                         </div>
                     </div>
@@ -156,7 +162,7 @@ const AllSignals = () => {
                                 </h2>
                                 <div className="h-6 w-[1px] bg-white/10"></div>
                                 <div className="text-xs text-muted-foreground">
-                                    Total Records: <span className="text-foreground font-bold">{MOCK_HISTORY.length}</span>
+                                    Total Records: <span className="text-foreground font-bold">{history.length}</span>
                                 </div>
                             </div>
 

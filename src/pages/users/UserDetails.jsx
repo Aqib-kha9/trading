@@ -1,35 +1,54 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, Calendar, CreditCard, Shield, Activity, ArrowLeft, History } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import useToast from '../../hooks/useToast';
 
 import SubscriptionHistory from './SubscriptionHistory';
 import SignalsAccess from './SignalsAccess';
-import { useState } from 'react';
 
 const UserDetails = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const userId = searchParams.get('id');
+    const toast = useToast();
     const [activeTab, setActiveTab] = useState('overview');
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock User Data
-    const user = {
-        name: 'Rajesh Kumar',
-        email: 'rajesh@example.com',
-        phone: '+91 98765 43210',
-        joinDate: '12 Jan 2024',
-        plan: 'Gold Membership',
-        status: 'Active',
-        walletBalance: 15400,
-        kycStatus: 'Verified'
-    };
+    useEffect(() => {
+        const loadUser = async () => {
+            try {
+                const { fetchUserById } = await import('../../api/users.api');
+                const { data } = await fetchUserById(userId);
+                setUser(data);
+            } catch (error) {
+                console.error("Failed to load user", error);
+                toast.error("Failed to load client details");
+                navigate('/users/all');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (userId) {
+            loadUser();
+        }
+    }, [userId, navigate, toast]);
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: User },
         { id: 'history', label: 'Subscription History', icon: History },
-        { id: 'signals', label: 'Signals Access', icon: Activity }, // Use generic icon if Key not imported or import Key
+        { id: 'signals', label: 'Signals Access', icon: Activity },
     ];
 
+    if (loading) {
+        return <div className="p-10 text-center text-muted-foreground">Loading profile...</div>;
+    }
+
+    if (!user) return null;
 
     return (
         <div className="space-y-6">
@@ -45,7 +64,7 @@ const UserDetails = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Button variant="outline" onClick={() => navigate('/users/edit')}>
+                    <Button variant="outline" onClick={() => navigate(`/users/edit?id=${user.id}`)}>
                         Edit Profile
                     </Button>
                 </div>
@@ -84,7 +103,8 @@ const UserDetails = () => {
                                     <div>
                                         <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase font-bold tracking-wider">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border ${user.status === 'Active' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                }`}>
                                                 {user.status}
                                             </span>
                                             <span className="px-2 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500 border border-blue-500/20 uppercase font-bold tracking-wider">
@@ -105,13 +125,13 @@ const UserDetails = () => {
                                 <div className="space-y-1">
                                     <label className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Phone Number</label>
                                     <div className="flex items-center gap-2 text-sm text-foreground">
-                                        <Phone size={14} className="text-primary" /> {user.phone}
+                                        <Phone size={14} className="text-primary" /> {user.phone || 'N/A'}
                                     </div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Member Since</label>
                                     <div className="flex items-center gap-2 text-sm text-foreground">
-                                        <Calendar size={14} className="text-primary" /> {user.joinDate}
+                                        <Calendar size={14} className="text-primary" /> {new Date(user.joinDate).toLocaleDateString()}
                                     </div>
                                 </div>
                                 <div className="space-y-1">
@@ -137,14 +157,11 @@ const UserDetails = () => {
                             <Card className="bg-[#050505] border-white/5">
                                 <div className="flex items-center gap-3 mb-4">
                                     <Activity className="text-orange-500" size={20} />
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Activity Score</h3>
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Client ID</h3>
                                 </div>
-                                <div className="w-full bg-secondary rounded-full h-2 mb-2 overflow-hidden">
-                                    <div className="bg-orange-500 h-full rounded-full" style={{ width: '75%' }}></div>
-                                </div>
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-muted-foreground">Engagement</span>
-                                    <span className="text-orange-500 font-bold">High (75%)</span>
+                                <div className="text-2xl font-bold font-mono text-foreground mb-1">{user.clientId}</div>
+                                <div className="text-xs text-muted-foreground flex justify-between">
+                                    <span>Broker: {user.subBrokerName}</span>
                                 </div>
                             </Card>
                         </div>
@@ -153,13 +170,13 @@ const UserDetails = () => {
 
                 {activeTab === 'history' && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <SubscriptionHistory isEmbedded />
+                        <SubscriptionHistory isEmbedded data={user.subscriptionHistory} />
                     </div>
                 )}
 
                 {activeTab === 'signals' && (
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <SignalsAccess isEmbedded />
+                        <SignalsAccess isEmbedded data={user.signals} />
                     </div>
                 )}
             </div>

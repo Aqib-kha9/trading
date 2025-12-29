@@ -1,25 +1,16 @@
+import client from './client';
+
 export const login = async (credentials) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (credentials.email === "admin@masterstroke.com" && credentials.password === "admin123") {
-        resolve({
-          data: {
-            token: "mock-jwt-token-123",
-            user: {
-              id: 1,
-              name: "Admin User",
-              email: "admin@masterstroke.com",
-              role: "admin"
-            }
-          }
-        });
-      } else {
-        reject({ response: { data: { message: "Invalid credentials" } } });
-      }
-    }, 800);
-  });
+  return client.post('/auth/login', credentials);
 };
 
 export const logout = async () => {
-    return new Promise((resolve) => setTimeout(resolve, 300));
+    // Optional: Call logout endpoint if exists
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return Promise.resolve();
+};
+
+export const getMe = async () => {
+    return client.get('/auth/me');
 };

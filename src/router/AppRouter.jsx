@@ -7,6 +7,7 @@ import Dashboard from '../pages/dashboard/AdminDashboard';
 
 // User Management
 import AllUsers from '../pages/users/AllUsers';
+import CreateUser from '../pages/users/CreateUser';
 import UserDetails from '../pages/users/UserDetails';
 import EditUser from '../pages/users/EditUser';
 import SubscriptionHistory from '../pages/users/SubscriptionHistory';
@@ -92,6 +93,7 @@ const AppRouter = () => {
 
                     {/* User Management */}
                     <Route path="users/all" element={<AllUsers />} />
+                    <Route path="users/create" element={<CreateUser />} />
                     <Route path="users/details" element={<UserDetails />} />
                     <Route path="users/edit" element={<EditUser />} />
                     <Route path="users/history" element={<SubscriptionHistory />} />

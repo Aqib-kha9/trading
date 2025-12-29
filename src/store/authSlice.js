@@ -5,7 +5,7 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
   try {
     const response = await loginApi(credentials);
     localStorage.setItem('token', response.data.token);
-    return response.data.user;
+    return { user: response.data.user, token: response.data.token };
   } catch (error) {
     return rejectWithValue(error.response.data.message);
   }
@@ -39,8 +39,8 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.isAuthenticated = true;
-        state.user = action.payload;
-        state.token = "mock-jwt-token-123";
+        state.user = action.payload.user;
+        state.token = action.payload.token;
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;

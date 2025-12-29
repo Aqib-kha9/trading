@@ -1,25 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Briefcase, Download, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BrokerTable from '../../components/tables/BrokerTable';
 import Button from '../../components/ui/Button';
 import { clsx } from 'clsx';
 
-// Mock Data with Commission Type
-const MOCK_BROKERS = [
-    { id: 'BRK-001', name: 'Alpha Traders', location: 'Mumbai, MH', clients: 124, commission: { type: 'PERCENTAGE', value: 20 }, revenue: '₹ 5,40,000', status: 'Active' },
-    { id: 'BRK-002', name: 'West Coast Finserv', location: 'Pune, MH', clients: 85, commission: { type: 'FIXED', value: 500 }, revenue: '₹ 3,20,000', status: 'Active' },
-    { id: 'BRK-003', name: 'Skyline Capital', location: 'Delhi, DL', clients: 42, commission: { type: 'PERCENTAGE', value: 25 }, revenue: '₹ 1,80,000', status: 'Inactive' },
-    { id: 'BRK-004', name: 'Prime Invest', location: 'Bangalore, KA', clients: 210, commission: { type: 'PERCENTAGE', value: 18 }, revenue: '₹ 8,90,000', status: 'Active' },
-    { id: 'BRK-005', name: 'Rapid Growth', location: 'Hyderabad, TS', clients: 15, commission: { type: 'FIXED', value: 300 }, revenue: '₹ 45,000', status: 'Blocked' },
-];
-
 const AllBrokers = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
+    const [brokers, setBrokers] = useState([]);
 
-    const filteredBrokers = MOCK_BROKERS.filter(broker =>
+    useEffect(() => {
+        const loadBrokers = async () => {
+            try {
+                const { fetchSubBrokers } = await import('../../api/subbrokers.api');
+                const { data } = await fetchSubBrokers();
+                setBrokers(data);
+            } catch (e) {
+                console.error("Failed to load brokers", e);
+            }
+        };
+        loadBrokers();
+    }, []);
+
+    const filteredBrokers = brokers.filter(broker =>
         (filter === 'All' || broker.status === filter) &&
         (broker.name.toLowerCase().includes(searchTerm.toLowerCase()) || broker.id.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -96,9 +101,9 @@ const AllBrokers = () => {
 
             {/* Footer Stats */}
             <div className="h-9 bg-muted/30 border border-border rounded-lg flex items-center justify-between px-4 text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
-                <div>Total Partners: <span className="text-foreground font-bold">{MOCK_BROKERS.length}</span></div>
+                <div>Total Partners: <span className="text-foreground font-bold">{brokers.length}</span></div>
                 <div className="flex gap-6">
-                    <span>Active: <span className="text-emerald-500 font-bold">{MOCK_BROKERS.filter(b => b.status === 'Active').length}</span></span>
+                    <span>Active: <span className="text-emerald-500 font-bold">{brokers.filter(b => b.status === 'Active').length}</span></span>
                     <span>Total Revenue: <span className="text-amber-500 font-bold">₹ 19,75,000</span></span>
                 </div>
             </div>

@@ -7,6 +7,26 @@ import ActivityLog from '../../components/dashboard/ActivityLog';
 import QuickActions from '../../components/dashboard/QuickActions';
 
 const AdminDashboard = () => {
+    const [stats, setStats] = React.useState({
+        users: { total: 0, growth: 0 },
+        subscriptions: { active: 0, growth: 0 },
+        revenue: { total: 0, growth: 0 },
+        tickets: { pending: 0 }
+    });
+
+    React.useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const { fetchDashboardStats } = await import('../../api/dashboard.api');
+                const { data } = await fetchDashboardStats();
+                setStats(data);
+            } catch (e) {
+                console.error("Stats load failed", e);
+            }
+        };
+        loadStats();
+    }, []);
+
     return (
         <div className="space-y-4 flex flex-col h-auto lg:h-full lg:overflow-hidden pb-4 lg:pb-0">
             {/* Top Grid: Top Movers (Visual Style) */}
@@ -14,30 +34,30 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 h-auto lg:h-36 shrink-0">
                 <VisualStatCard
                     title="Revenue"
-                    value="85.2L"
-                    change="+24%"
+                    value={`₹${(stats.revenue?.total || 0).toLocaleString()}`}
+                    change="24%"
                     type="area"
                     color="#10b981"
                     data={[{ v: 10 }, { v: 15 }, { v: 12 }, { v: 25 }, { v: 20 }, { v: 35 }, { v: 40 }]}
                 />
                 <VisualStatCard
                     title="Users"
-                    value="12.4K"
-                    change="+12%"
+                    value={stats.users?.total || 0}
+                    change="12%"
                     type="bar"
                     color="#3b82f6"
                 />
                 <VisualStatCard
                     title="Subs"
-                    value="84%"
-                    change="+5%"
+                    value={stats.subscriptions?.active || 0}
+                    change="5%"
                     type="radial"
                     color="#f59e0b"
                 />
                 <VisualStatCard
-                    title="Signals"
-                    value="92%"
-                    change="High"
+                    title="Tickets"
+                    value={stats.tickets?.pending || 0}
+                    change="Pending"
                     type="area"
                     color="#ef4444"
                     data={[{ v: 50 }, { v: 80 }, { v: 60 }, { v: 90 }, { v: 75 }, { v: 95 }, { v: 85 }]}

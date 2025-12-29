@@ -1,33 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, MessageSquare, Download, Filter, Inbox, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TicketTable from '../../components/tables/TicketTable';
 import Button from '../../components/ui/Button';
 import { clsx } from 'clsx';
 
-// Mock Data
-const MOCK_TICKETS = [
-    { id: 'TKT-2024', subject: 'Payment Failed for Premium Plan', category: 'Billing', user: 'Rahul Sharma', ipAddress: '192.168.1.10', priority: 'High', status: 'Open', date: '2024-01-12' },
-    { id: 'TKT-2023', subject: 'Login Issue on Mobile', category: 'Tech Support', user: 'Amit Verma', ipAddress: '110.22.45.12', priority: 'Medium', status: 'Open', date: '2024-01-12' },
-    { id: 'TKT-2022', subject: 'How to change password?', category: 'Account', user: 'Sneha Gupta', ipAddress: '172.16.0.5', priority: 'Low', status: 'Resolved', date: '2024-01-11' },
-    { id: 'TKT-2021', subject: 'Signal not received', category: 'Signals', user: 'Vikram Singh', ipAddress: '203.0.113.8', priority: 'High', status: 'Resolved', date: '2024-01-10' },
-    { id: 'TKT-2020', subject: 'Refund Request', category: 'Billing', user: 'Pooja Patel', ipAddress: '198.51.100.2', priority: 'High', status: 'Open', date: '2024-01-09' },
-];
-
 const AllTickets = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('open'); // open, resolved, all
+    const [tickets, setTickets] = useState([]);
+
+    useEffect(() => {
+        const loadTickets = async () => {
+            try {
+                const { fetchTickets } = await import('../../api/tickets.api');
+                const { data } = await fetchTickets();
+                setTickets(data);
+            } catch (e) {
+                console.error("Failed to load tickets", e);
+            }
+        };
+        loadTickets();
+    }, []);
 
     const getFilteredTickets = () => {
-        let data = MOCK_TICKETS;
+        let data = tickets;
         if (activeTab === 'open') data = data.filter(t => t.status === 'Open');
         if (activeTab === 'resolved') data = data.filter(t => t.status === 'Resolved');
 
         return data.filter(t =>
-            t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.user.toLowerCase().includes(searchTerm.toLowerCase())
+            (t.subject && t.subject.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (t.user && t.user.name && t.user.name.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     };
 
@@ -89,7 +94,7 @@ const AllTickets = () => {
 
                         <div className="flex items-center gap-2 text-xs">
                             <span className="text-muted-foreground font-medium">Pending:</span>
-                            <span className="text-red-500 font-bold">{MOCK_TICKETS.filter(t => t.status === 'Open').length}</span>
+                            <span className="text-red-500 font-bold">{tickets.filter(t => t.status === 'Open').length}</span>
                         </div>
                     </div>
 

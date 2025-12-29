@@ -3,12 +3,10 @@ import { History, Download } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 
-const SubscriptionHistory = ({ isEmbedded = false }) => {
-    const history = [
-        { id: 'SUB-101', plan: 'Options Segment', amount: '₹25,000', date: '12 Jan 2024', status: 'Active' },
-        { id: 'SUB-098', plan: 'Forex Segment', amount: '₹25,000', date: '10 Dec 2023', status: 'Expired' },
-        { id: 'SUB-045', plan: 'Forex Segment', amount: '₹25,000', date: '08 Nov 2023', status: 'Expired' },
-    ];
+const SubscriptionHistory = ({ isEmbedded = false, data = [] }) => {
+    // Fallback or Empty state handled in rendering
+    const history = data.length > 0 ? data : [];
+
 
     return (
         <div className={`space-y-6 h-full flex flex-col ${isEmbedded ? 'pt-2' : ''}`}>
@@ -39,12 +37,12 @@ const SubscriptionHistory = ({ isEmbedded = false }) => {
                         <tbody className="text-sm">
                             {history.map((item, index) => (
                                 <tr key={index} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                                    <td className="p-4 font-mono text-muted-foreground">{item.id}</td>
+                                    <td className="p-4 font-mono text-muted-foreground">{item.id.slice(-6).toUpperCase()}</td>
                                     <td className="p-4 font-medium text-foreground">{item.plan}</td>
                                     <td className="p-4 text-foreground font-mono">{item.amount}</td>
-                                    <td className="p-4 text-muted-foreground">{item.date}</td>
+                                    <td className="p-4 text-muted-foreground">{new Date(item.date).toLocaleDateString()}</td>
                                     <td className="p-4">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border ${item.status === 'Active'
+                                        <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border ${item.status === 'active'
                                             ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                             : 'bg-red-500/10 text-red-500 border-red-500/20'
                                             }`}>

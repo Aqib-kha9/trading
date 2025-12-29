@@ -1,15 +1,47 @@
-import React from 'react';
-import { Key, Unlock, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Unlock, Lock } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import Card from '../../components/ui/Card';
+import useToast from '../../hooks/useToast';
 
-const SignalsAccess = ({ isEmbedded = false }) => {
-    const accessList = [
-        { category: 'Nifty 50 Options', access: true, expiry: '12 Feb 2024' },
-        { category: 'BankNifty Options', access: true, expiry: '12 Feb 2024' },
-        { category: 'Stocks Intraday', access: true, expiry: '12 Feb 2024' },
-        { category: 'Commodity (MCX)', access: false, expiry: '-' },
-        { category: 'Forex Signals', access: false, expiry: '-' },
-    ];
+const SignalsAccess = ({ isEmbedded = false, data = [] }) => {
+    const [accessList, setAccessList] = useState(data);
+    const [searchParams] = useSearchParams();
+    const userId = searchParams.get('id');
+    const toast = useToast();
+    const [loading, setLoading] = useState(false);
+
+    // If data prop updates (e.g. from parent re-fetch), sync local state
+    React.useEffect(() => {
+        if (data && data.length > 0) {
+            setAccessList(data);
+        }
+    }, [data]);
+
+    const handleToggleAccess = async (item) => {
+        setLoading(true);
+        try {
+            const { updateSignalAccess } = await import('../../api/users.api');
+            const newAccess = !item.access;
+
+            await updateSignalAccess(userId, {
+                category: item.key, // Backend expects 'key' e.g. 'NIFTY_OPT'
+                access: newAccess
+            });
+
+            // Optimistic Update
+            setAccessList(prev => prev.map(s =>
+                s.key === item.key ? { ...s, access: newAccess } : s
+            ));
+
+            toast.success(`Access ${newAccess ? 'Granted' : 'Revoked'} for ${item.category}`);
+        } catch (error) {
+            console.error("Failed to update signal access", error);
+            toast.error("Failed to update access");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className={`space-y-6 ${isEmbedded ? 'pt-2' : ''}`}>
@@ -42,13 +74,17 @@ const SignalsAccess = ({ isEmbedded = false }) => {
 
                             <h3 className="text-lg font-bold text-foreground mb-1">{item.category}</h3>
                             <p className="text-xs text-muted-foreground">
-                                {item.access ? `Valid until: ${item.expiry}` : 'Upgrade plan to unlock'}
+                                {item.access ? `Valid until: ${new Date(item.expiry).toLocaleDateString()}` : 'Locked by admin or plan'}
                             </p>
                         </div>
 
                         {/* Footer Action */}
                         <div className="p-3 bg-white/[0.02] border-t border-white/5 flex justify-end">
-                            <button className={`text-xs font-bold uppercase tracking-wider hover:underline ${item.access ? 'text-red-500' : 'text-primary'}`}>
+                            <button
+                                onClick={() => handleToggleAccess(item)}
+                                disabled={loading}
+                                className={`text-xs font-bold uppercase tracking-wider hover:underline ${item.access ? 'text-red-500' : 'text-primary'} disabled:opacity-50`}
+                            >
                                 {item.access ? 'Revoke Access' : 'Grant Access'}
                             </button>
                         </div>

@@ -20,11 +20,19 @@ const CreateSignal = () => {
         resolver: yupResolver(schema)
     });
 
-    const onSubmit = (data) => {
-        console.log(data);
-        setTimeout(() => {
+    const onSubmit = async (data) => {
+        try {
+            await import('../../api/signals.api').then(m => m.createSignal({
+                ...data,
+                segment: 'EQUITY', // Default for now, need field in UI
+                targets: { target1: data.entry * 1.01 }, // Mock calculation if target removed from UI
+                // Add conditional logic if UI doesn't have required fields
+            }));
             navigate('/signals');
-        }, 500);
+        } catch (e) {
+            console.error(e);
+            alert('Failed to create signal');
+        }
     };
 
     return (

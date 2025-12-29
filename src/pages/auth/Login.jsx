@@ -83,7 +83,7 @@ const Login = () => {
 
                     {error && (
                         <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm text-center font-medium">
-                            {error.message || 'Invalid credentials provided'}
+                            {typeof error === 'string' ? error : (error?.message || 'Invalid credentials provided')}
                         </div>
                     )}
 

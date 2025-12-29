@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, Edit, Ban, AlertTriangle, ShieldAlert, UserCheck } from 'lucide-react';
 
-const UserTable = ({ users, onAction }) => {
+const UserTable = ({ users, onAction, isLoading }) => {
     return (
         <div className="terminal-panel w-full h-full overflow-hidden border border-border bg-card rounded-lg shadow-2xl relative flex flex-col">
             {/* Table Header Backdrop */}
@@ -14,6 +14,7 @@ const UserTable = ({ users, onAction }) => {
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Client ID</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Sub Broker</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Name / Contact</th>
+                            <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">IP Address</th>
                             <th className="px-5 py-3 border-r border-border text-right bg-muted/90 backdrop-blur-sm">Fund (Equity)</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Plan</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Start Date</th>
@@ -24,141 +25,187 @@ const UserTable = ({ users, onAction }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
-                        {users.map((user) => {
-                            // Status Logic
-                            const isLiquidated = user.status === 'Liquidated';
-                            const isBlocked = user.status === 'Blocked';
-
-                            // Sub Broker Badge Logic
-                            const isDirect = user.subBrokerId === 'DIRECT';
-
-                            // Validity Progress Logic
-                            const start = new Date(user.subscriptionStart);
-                            const end = new Date(user.subscriptionExpiry);
-                            const today = new Date();
-
-                            const totalTime = end - start;
-                            const timeElapsed = today - start;
-
-                            // Prevent negative progress or > 100%
-                            let percentage = (timeElapsed / totalTime) * 100;
-                            percentage = Math.max(0, Math.min(100, percentage));
-
-                            const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-                            const isExpired = daysLeft < 0;
-
-                            const daysText = isExpired ? "Expired" : `${daysLeft} Days Left`;
-                            const daysColor = isExpired ? "text-red-500" : (daysLeft < 7 ? "text-red-400" : "text-emerald-500");
-                            const progressColor = isExpired ? "bg-red-500" : (daysLeft < 7 ? "bg-red-500" : "bg-emerald-500");
-
-                            // Date Format
-                            const formatDate = (dateString) => {
-                                const d = new Date(dateString);
-                                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                            };
-
-                            return (
-                                <tr key={user.id} className="hover:bg-primary/[0.02] transition-colors group relative">
-                                    <td className="px-5 py-3 text-primary font-bold tracking-tight border-r border-white/5 relative">
-                                        <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary/0 group-hover:bg-primary transition-colors"></div>
-                                        {user.clientId}
-                                    </td>
-
-                                    {/* Sub Broker Column */}
-                                    <td className="px-5 py-3 border-r border-white/5">
-                                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded w-fit text-[9px] font-bold uppercase tracking-wider ${isDirect ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
-                                            <UserCheck size={10} />
-                                            {isDirect ? 'DIRECT' : user.subBrokerName?.split(' ')[0]}
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="10" className="h-[400px] text-center">
+                                    <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground animate-pulse">
+                                        <div className="animate-spin text-primary">
+                                            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
                                         </div>
-                                    </td>
+                                        <span className="text-xs font-mono uppercase tracking-widest">Loading Client Database...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
+                            users.map((user) => {
+                                // Status Logic
+                                const isLiquidated = user.status === 'Liquidated';
+                                const isBlocked = user.status === 'Blocked';
 
-                                    <td className="px-5 py-3 border-r border-white/5 font-sans">
-                                        <div className="flex flex-col">
-                                            <span className="text-foreground font-semibold text-xs">{user.name}</span>
-                                            <span className="text-[10px] text-muted-foreground">{user.email}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-3 text-right border-r border-white/5 text-foreground/90 font-bold tracking-tight">₹{user.equity.toLocaleString()}</td>
-                                    <td className="px-5 py-3 text-center border-r border-white/5">
-                                        <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider ${user.plan === 'Gold' ? 'border-yellow-500/20 text-yellow-500 bg-yellow-500/5' :
-                                            user.plan === 'Platinum' ? 'border-cyan-500/20 text-cyan-500 bg-cyan-500/5' :
-                                                user.plan === 'Silver' ? 'border-slate-400/20 text-slate-400 bg-slate-400/5' :
-                                                    'border-white/10 text-muted-foreground'
-                                            }`}>
-                                            {user.plan}
-                                        </span>
-                                    </td>
+                                // Sub Broker Badge Logic
+                                const isDirect = user.subBrokerId === 'DIRECT';
 
-                                    {/* Start Date */}
-                                    <td className="px-5 py-3 text-center border-r border-white/5 text-muted-foreground">
-                                        {formatDate(user.subscriptionStart)}
-                                    </td>
+                                // Validity Progress Logic
+                                const hasSubscription = user.subscriptionStart && user.subscriptionExpiry;
 
-                                    {/* Expiry Date */}
-                                    <td className="px-5 py-3 text-center border-r border-white/5 font-bold text-foreground">
-                                        {formatDate(user.subscriptionExpiry)}
-                                    </td>
+                                let start, end, today, totalTime, timeElapsed, percentage, daysLeft, isExpired, daysText, daysColor, progressColor;
 
-                                    {/* Validity Progress Bar */}
-                                    <td className="px-5 py-3 border-r border-white/5">
-                                        <div className="flex flex-col gap-1.5 w-full min-w-[140px]">
-                                            <div className="flex justify-between items-center text-[9px] uppercase font-bold">
-                                                <span className="text-muted-foreground">Active</span>
-                                                <span className={daysColor}>{daysText}</span>
+                                if (hasSubscription) {
+                                    start = new Date(user.subscriptionStart);
+                                    end = new Date(user.subscriptionExpiry);
+                                    today = new Date();
+
+                                    totalTime = end - start;
+                                    timeElapsed = today - start;
+
+                                    // Prevent negative progress or > 100%
+                                    percentage = (timeElapsed / totalTime) * 100;
+                                    percentage = Math.max(0, Math.min(100, percentage));
+
+                                    daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                                    isExpired = daysLeft < 0;
+
+                                    daysText = isExpired ? "Expired" : `${daysLeft} Days Left`;
+                                    daysColor = isExpired ? "text-red-500" : (daysLeft < 7 ? "text-red-400" : "text-emerald-500");
+                                    progressColor = isExpired ? "bg-red-500" : (daysLeft < 7 ? "bg-red-500" : "bg-emerald-500");
+                                } else {
+                                    daysText = "No Plan";
+                                    daysColor = "text-muted-foreground";
+                                    percentage = 0;
+                                    progressColor = "bg-muted";
+                                }
+
+                                // Date Format
+                                const formatDate = (dateString) => {
+                                    if (!dateString) return '-';
+                                    const d = new Date(dateString);
+                                    if (isNaN(d.getTime())) return '-';
+                                    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                };
+
+                                return (
+                                    <tr key={user.id} className="hover:bg-primary/[0.02] transition-colors group relative">
+                                        <td className="px-5 py-3 text-primary font-bold tracking-tight border-r border-white/5 relative">
+                                            <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-primary/0 group-hover:bg-primary transition-colors"></div>
+                                            {user.clientId}
+                                        </td>
+
+                                        {/* Sub Broker Column */}
+                                        <td className="px-5 py-3 border-r border-white/5">
+                                            <div className={`flex items-center gap-1.5 px-2 py-1 rounded w-fit text-[9px] font-bold uppercase tracking-wider ${isDirect ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
+                                                <UserCheck size={10} />
+                                                {isDirect ? 'DIRECT' : user.subBrokerName?.split(' ')[0]}
                                             </div>
-                                            <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
-                                                    style={{ width: `${percentage}%` }}
-                                                ></div>
+                                        </td>
+
+                                        <td className="px-5 py-3 border-r border-white/5 font-sans">
+                                            <div className="flex flex-col">
+                                                <span className="text-foreground font-semibold text-xs">{user.name}</span>
+                                                <span className="text-[10px] text-muted-foreground">{user.email}</span>
                                             </div>
-                                        </div>
-                                    </td>
-
-                                    <td className="px-5 py-3 text-center border-r border-white/5">
-                                        {isLiquidated ? (
-                                            <span className="flex items-center justify-center gap-1.5 text-red-500 bg-red-500/5 border border-red-500/10 px-2 py-0.5 rounded text-[9px] font-bold uppercase animate-pulse">
-                                                <AlertTriangle size={10} /> LIQUIDATED
+                                        </td>
+                                        <td className="px-5 py-3 border-r border-white/5 text-center font-mono text-[10px] text-muted-foreground">
+                                            {user.ip === '::1' || user.ip === '127.0.0.1' ? 'Localhost' : (user.ip || '-')}
+                                        </td>
+                                        <td className="px-5 py-3 text-right border-r border-white/5 text-foreground/90 font-bold tracking-tight">₹{user.equity.toLocaleString()}</td>
+                                        <td className="px-5 py-3 text-center border-r border-white/5">
+                                            <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider ${user.plan === 'Gold' ? 'border-yellow-500/20 text-yellow-500 bg-yellow-500/5' :
+                                                user.plan === 'Platinum' ? 'border-cyan-500/20 text-cyan-500 bg-cyan-500/5' :
+                                                    user.plan === 'Silver' ? 'border-slate-400/20 text-slate-400 bg-slate-400/5' :
+                                                        'border-white/10 text-muted-foreground'
+                                                }`}>
+                                                {user.plan}
                                             </span>
-                                        ) : isBlocked ? (
-                                            <span className="text-muted-foreground bg-white/5 px-2 py-0.5 rounded text-[9px] font-bold uppercase">BLOCKED</span>
-                                        ) : (
-                                            <span className="flex items-center justify-center gap-1.5 text-emerald-500 bg-emerald-500/5 border border-emerald-500/10 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> ACTIVE
-                                            </span>
-                                        )}
-                                    </td>
+                                        </td>
 
-                                    <td className="px-3 py-3 text-center">
-                                        <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                title="View Details"
-                                                onClick={() => onAction('view', user)}
-                                                className="p-1.5 hover:bg-emerald-500/10 hover:text-emerald-500 text-muted-foreground rounded-md transition-all duration-200"
-                                            >
-                                                <Eye size={14} />
-                                            </button>
-                                            <button
-                                                title="Edit User"
-                                                onClick={() => onAction('edit', user)}
-                                                className="p-1.5 hover:bg-blue-500/10 hover:text-blue-500 text-muted-foreground rounded-md transition-all duration-200"
-                                            >
-                                                <Edit size={14} />
-                                            </button>
-                                            {user.status === 'Active' && (
+                                        {/* Start Date */}
+                                        <td className="px-5 py-3 text-center border-r border-white/5 text-muted-foreground">
+                                            {formatDate(user.subscriptionStart)}
+                                        </td>
+
+                                        {/* Expiry Date */}
+                                        <td className="px-5 py-3 text-center border-r border-white/5 font-bold text-foreground">
+                                            {formatDate(user.subscriptionExpiry)}
+                                        </td>
+
+                                        {/* Validity Progress Bar */}
+                                        <td className="px-5 py-3 border-r border-white/5">
+                                            <div className="flex flex-col gap-1.5 w-full min-w-[140px]">
+                                                <div className="flex justify-between items-center text-[9px] uppercase font-bold">
+                                                    <span className="text-muted-foreground">Active</span>
+                                                    <span className={daysColor}>{daysText}</span>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-secondary/50 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+                                                        style={{ width: `${percentage}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <td className="px-5 py-3 text-center border-r border-white/5">
+                                            {isLiquidated ? (
+                                                <span className="flex items-center justify-center gap-1.5 text-red-500 bg-red-500/5 border border-red-500/10 px-2 py-0.5 rounded text-[9px] font-bold uppercase animate-pulse">
+                                                    <AlertTriangle size={10} /> LIQUIDATED
+                                                </span>
+                                            ) : isBlocked ? (
+                                                <span className="text-muted-foreground bg-white/5 px-2 py-0.5 rounded text-[9px] font-bold uppercase">BLOCKED</span>
+                                            ) : (
+                                                <span className="flex items-center justify-center gap-1.5 text-emerald-500 bg-emerald-500/5 border border-emerald-500/10 px-2 py-0.5 rounded text-[9px] font-bold uppercase">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> ACTIVE
+                                                </span>
+                                            )}
+                                        </td>
+
+                                        <td className="px-3 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                                                 <button
-                                                    title="Liquidate Positions"
-                                                    onClick={() => onAction('liquidate', user)}
+                                                    title="View Details"
+                                                    onClick={() => onAction('view', user)}
+                                                    className="p-1.5 hover:bg-emerald-500/10 hover:text-emerald-500 text-muted-foreground rounded-md transition-all duration-200"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
+                                                <button
+                                                    title="Edit User"
+                                                    onClick={() => onAction('edit', user)}
+                                                    className="p-1.5 hover:bg-blue-500/10 hover:text-blue-500 text-muted-foreground rounded-md transition-all duration-200"
+                                                >
+                                                    <Edit size={14} />
+                                                </button>
+
+                                                <button
+                                                    title={user.status === 'Blocked' ? "Unblock User" : "Block User"}
+                                                    onClick={() => onAction('block', user)}
+                                                    className={`p-1.5 rounded-md transition-all duration-200 ${user.status === 'Blocked' ? 'text-orange-500 bg-orange-500/10' : 'hover:bg-orange-500/10 hover:text-orange-500 text-muted-foreground'}`}
+                                                >
+                                                    <Ban size={14} />
+                                                </button>
+
+                                                {user.status === 'Active' && (
+                                                    <button
+                                                        title="Liquidate Positions"
+                                                        onClick={() => onAction('liquidate', user)}
+                                                        className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-muted-foreground rounded-md transition-all duration-200"
+                                                    >
+                                                        <ShieldAlert size={14} />
+                                                    </button>
+                                                )}
+
+                                                <button
+                                                    title="Delete User"
+                                                    onClick={() => onAction('delete', user)}
                                                     className="p-1.5 hover:bg-red-500/10 hover:text-red-500 text-muted-foreground rounded-md transition-all duration-200"
                                                 >
-                                                    <ShieldAlert size={14} />
+                                                    <AlertTriangle size={14} />
                                                 </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
                     </tbody>
                 </table>
             </div>
