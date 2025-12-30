@@ -1,36 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Maximize2, TrendingUp, CheckCircle, ArrowUpRight } from 'lucide-react';
+import { Maximize2, ArrowUpRight } from 'lucide-react';
 import { useTheme } from '../../components/theme-provider';
 
-const PerformanceGraph = ({ filter = 'month' }) => {
+const PerformanceGraph = ({ data, avgAccuracy, accuracyChange }) => {
     const { theme } = useTheme();
-    const [data, setData] = useState([]);
-
-    // Mock Data Sets
-    const datasets = {
-        month: [
-            { time: 'Week 1', accuracy: 78, volume: 10 },
-            { time: 'Week 2', accuracy: 82, volume: 15 },
-            { time: 'Week 3', accuracy: 75, volume: 12 },
-            { time: 'Week 4', accuracy: 88, volume: 18 },
-        ],
-        quarter: [
-            { time: 'Oct', accuracy: 72, volume: 120 },
-            { time: 'Nov', accuracy: 79, volume: 145 },
-            { time: 'Dec', accuracy: 85, volume: 160 },
-        ],
-        year: [
-            { time: 'Q1', accuracy: 68, volume: 300 },
-            { time: 'Q2', accuracy: 75, volume: 420 },
-            { time: 'Q3', accuracy: 72, volume: 380 },
-            { time: 'Q4', accuracy: 82, volume: 450 },
-        ],
-    };
-
-    useEffect(() => {
-        setData(datasets[filter] || datasets['month']);
-    }, [filter]);
+    const chartData = data || [];
 
     return (
         <div className="h-full flex flex-col bg-background/50 border border-white/5 rounded-xl shadow-xl overflow-hidden relative group hover:border-purple-500/50 transition-all duration-500">
@@ -46,7 +21,7 @@ const PerformanceGraph = ({ filter = 'month' }) => {
                     <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse shadow-[0_0_8px_#a855f7]"></div>
                     <div className="flex flex-col">
                         <span className="text-sm font-bold tracking-tight text-white/90 flex items-center gap-2">
-                            SIGNAL ACCURACY <span className="text-[10px] text-muted-foreground font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/5 uppercase">{filter === 'month' ? 'Current Month' : filter === 'quarter' ? 'Q4 2024' : '2024 YTD'}</span>
+                            SIGNAL ACCURACY
                         </span>
                     </div>
                 </div>
@@ -61,8 +36,10 @@ const PerformanceGraph = ({ filter = 'month' }) => {
                 <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Avg. Accuracy</span>
                     <span className="text-3xl font-bold text-white tracking-tight flex items-end gap-2">
-                        {filter === 'month' ? '82.5%' : filter === 'quarter' ? '78.2%' : '74.5%'}
-                        <span className="text-sm font-medium text-purple-500 mb-1.5 flex items-center gap-0.5">+4.2% <ArrowUpRight size={12} /></span>
+                        {avgAccuracy ? `${avgAccuracy}%` : '...'}
+                        <span className="text-sm font-medium text-purple-500 mb-1.5 flex items-center gap-0.5">
+                            {accuracyChange > 0 ? '+' : ''}{accuracyChange}% <ArrowUpRight size={12} />
+                        </span>
                     </span>
                 </div>
             </div>
@@ -70,7 +47,7 @@ const PerformanceGraph = ({ filter = 'month' }) => {
             {/* Chart Area */}
             <div className="flex-1 w-full min-h-0 pt-10">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <ComposedChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorAccuracy" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />

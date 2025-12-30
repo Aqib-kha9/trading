@@ -3,11 +3,42 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { ArrowLeft, Send, Paperclip, AlertCircle, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { createTicket } from '../../api/tickets.api';
+import useToast from '../../hooks/useToast';
 
 const CreateTicket = () => {
     const navigate = useNavigate();
-    const [priority, setPriority] = useState('Medium');
-    const [category, setCategory] = useState('Tech Support');
+    const toast = useToast();
+    const [loading, setLoading] = useState(false);
+
+    const [priority, setPriority] = useState('MEDIUM');
+    const [category, setCategory] = useState('TECHNICAL');
+    const [subject, setSubject] = useState('');
+    const [description, setDescription] = useState('');
+
+    const handleSubmit = async () => {
+        if (!subject.trim() || !description.trim()) {
+            toast.error("Please fill in all fields");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await createTicket({
+                subject,
+                category,
+                priority,
+                message: description
+            });
+            toast.success("Ticket created successfully");
+            navigate('/tickets');
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to create ticket");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -36,6 +67,8 @@ const CreateTicket = () => {
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-muted-foreground uppercase">Subject</label>
                             <input
+                                value={subject}
+                                onChange={(e) => setSubject(e.target.value)}
                                 type="text"
                                 placeholder="Brief summary of the issue..."
                                 className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
@@ -46,13 +79,13 @@ const CreateTicket = () => {
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-muted-foreground uppercase">Category</label>
                                 <div className="flex gap-2">
-                                    {['Tech Support', 'Billing', 'Feature'].map(c => (
+                                    {['TECHNICAL', 'PAYMENT', 'ACCOUNT'].map(c => (
                                         <button
                                             key={c}
                                             onClick={() => setCategory(c)}
                                             className={`flex-1 py-2 px-2 rounded-md border text-[10px] font-bold uppercase tracking-wide transition-all ${category === c
-                                                    ? 'border-primary bg-primary/10 text-primary'
-                                                    : 'border-border bg-secondary/10 text-muted-foreground hover:bg-secondary/30'
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-border bg-secondary/10 text-muted-foreground hover:bg-secondary/30'
                                                 }`}
                                         >
                                             {c}
@@ -63,13 +96,13 @@ const CreateTicket = () => {
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-muted-foreground uppercase">Priority</label>
                                 <div className="flex gap-2">
-                                    {['Low', 'Medium', 'High'].map(p => (
+                                    {['LOW', 'MEDIUM', 'HIGH'].map(p => (
                                         <button
                                             key={p}
                                             onClick={() => setPriority(p)}
                                             className={`flex-1 py-2 px-2 rounded-md border text-[10px] font-bold uppercase tracking-wide transition-all ${priority === p
-                                                    ? p === 'High' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-primary bg-primary/10 text-primary'
-                                                    : 'border-border bg-secondary/10 text-muted-foreground hover:bg-secondary/30'
+                                                ? p === 'HIGH' ? 'border-red-500 bg-red-500/10 text-red-500' : 'border-primary bg-primary/10 text-primary'
+                                                : 'border-border bg-secondary/10 text-muted-foreground hover:bg-secondary/30'
                                                 }`}
                                         >
                                             {p}
@@ -82,6 +115,8 @@ const CreateTicket = () => {
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-muted-foreground uppercase">Description</label>
                             <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
                                 rows={8}
                                 placeholder="Describe the issue in detail..."
                                 className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-3 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none resize-none"
@@ -92,8 +127,13 @@ const CreateTicket = () => {
                             <Button variant="outline" size="sm" className="gap-2 border-border text-muted-foreground hover:text-foreground">
                                 <Paperclip size={14} /> Attach Files
                             </Button>
-                            <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
-                                <Send size={16} /> Submit Ticket
+                            <Button
+                                variant="primary"
+                                className="gap-2 shadow-lg shadow-primary/20"
+                                onClick={handleSubmit}
+                                disabled={loading}
+                            >
+                                <Send size={16} /> {loading ? 'Submitting...' : 'Submit Ticket'}
                             </Button>
                         </div>
                     </div>

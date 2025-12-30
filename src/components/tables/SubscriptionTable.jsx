@@ -40,12 +40,12 @@ const SubscriptionTable = ({ transactions }) => {
                                     {txn.date}
                                 </td>
                                 <td className="px-5 py-3 text-center border-r border-border text-muted-foreground text-[10px]">
-                                    UPI
+                                    {txn.method || 'UPI'}
                                 </td>
                                 <td className="px-5 py-3 text-center">
                                     <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider flex items-center justify-center gap-1.5 w-fit mx-auto ${txn.status === 'Success'
-                                            ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5'
-                                            : 'border-red-500/20 text-red-500 bg-red-500/5'
+                                        ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5'
+                                        : 'border-red-500/20 text-red-500 bg-red-500/5'
                                         }`}>
                                         {txn.status === 'Success' ? <CheckCircle size={10} /> : <XCircle size={10} />}
                                         {txn.status}
@@ -56,7 +56,7 @@ const SubscriptionTable = ({ transactions }) => {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </div >
     );
 };
 

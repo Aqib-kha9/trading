@@ -11,7 +11,8 @@ const SearchableSelect = ({
     buttonClassName = "",
     dropdownClassName = "",
     disabled = false,
-    searchable = true
+    searchable = true,
+    variant = "compact" // "compact" | "standard"
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,25 +36,34 @@ const SearchableSelect = ({
 
     const selectedOption = options.find(opt => opt.value === value);
 
+    const variants = {
+        compact: "px-2 py-1.5 text-[10px] bg-secondary/30 border border-white/10 rounded hover:border-primary/50",
+        standard: "px-4 py-2.5 text-sm bg-secondary/30 border border-input rounded-lg hover:bg-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+    };
+
+    const activeRingColors = {
+        compact: "border-primary ring-1 ring-primary/20",
+        standard: "border-primary/50 ring-2 ring-primary/30"
+    };
+
     return (
-        <div className={`relative ${className}`} ref={containerRef}>
+        <div className={`relative ${isOpen ? 'z-50' : ''} ${className}`} ref={containerRef}>
             {/* Trigger Button */}
             <button
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`
-                    w-full flex items-center justify-between gap-2 px-2 py-1.5 text-[10px] 
-                    bg-secondary/30 border border-white/10 rounded 
-                    hover:border-primary/50 transition-colors
+                    w-full flex items-center justify-between gap-2 transition-all duration-200
+                    ${variants[variant] || variants.compact}
                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                    ${isOpen ? 'border-primary ring-1 ring-primary/20' : ''}
+                    ${isOpen ? (activeRingColors[variant] || activeRingColors.compact) : (variant === 'standard' ? 'group-hover:border-border' : '')}
                     ${buttonClassName}
                 `}
             >
                 <span className={`truncate ${selectedOption ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
-                <ChevronDown size={14} className={`text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={variant === 'standard' ? 16 : 14} className={`text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Panel */}

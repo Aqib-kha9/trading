@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
 import { BarChart2, TrendingUp, Users, Download, Calendar, DollarSign, Activity } from 'lucide-react';
 import Button from '../../components/ui/Button';
@@ -6,6 +6,8 @@ import Card from '../../components/ui/Card';
 import AdminRevenueGraph from '../../components/dashboard/AdminRevenueGraph';
 import GrowthGraph from '../../components/dashboard/GrowthGraph';
 import PerformanceGraph from '../../components/dashboard/PerformanceGraph';
+import { getAnalyticsData, exportAnalyticsData } from '../../api/analytics.api';
+import useToast from '../../hooks/useToast';
 
 const StatCard = ({ title, value, change, positive }) => (
     <Card className="bg-card border-border p-4 relative overflow-hidden group hover:border-primary/50 transition-all">
@@ -17,15 +19,93 @@ const StatCard = ({ title, value, change, positive }) => (
             <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-foreground">{value}</span>
                 <span className={clsx("text-[10px] font-bold", positive ? "text-emerald-500" : "text-red-500")}>
-                    {positive ? "+" : ""}{change}%
+                    {change > 0 ? "+" : ""}{change}%
                 </span>
             </div>
         </div>
     </Card>
 );
 
+import { Skeleton } from '../../components/ui/Skeleton';
+
+const ReportsSkeleton = () => (
+    <div className="max-w-6xl mx-auto space-y-6 pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="bg-card border-border p-4 relative overflow-hidden h-[100px]">
+                    <div className="space-y-4 relative z-10">
+                        <Skeleton className="h-3 w-24" />
+                        <div className="flex items-baseline gap-2">
+                            <Skeleton className="h-8 w-32" />
+                            <Skeleton className="h-4 w-12" />
+                        </div>
+                    </div>
+                </Card>
+            ))}
+        </div>
+        <div className="h-[450px] w-full bg-card border border-border rounded-xl p-4">
+            <div className="flex justify-between items-center mb-8">
+                <Skeleton className="h-6 w-48" />
+                <div className="flex gap-2">
+                    <Skeleton className="h-8 w-20" />
+                    <Skeleton className="h-8 w-20" />
+                </div>
+            </div>
+            <div className="flex items-end gap-2 h-[350px] pb-4 px-4">
+                {[...Array(12)].map((_, i) => (
+                    <Skeleton key={i} className="flex-1 rounded-t-lg" style={{ height: `${Math.random() * 60 + 20}%` }} />
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
 const Reports = () => {
     const [activeTab, setActiveTab] = useState('revenue');
+    const [range, setRange] = useState('month'); // 'month', 'quarter', 'year'
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const toast = useToast();
+
+    const handleExport = async () => {
+        try {
+            const response = await exportAnalyticsData(activeTab, range);
+            // Create Blob from response
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `report-${activeTab}-${range}-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (error) {
+            console.error("Export Failed", error);
+            // toast.error("Failed to export CSV");
+        }
+    };
+
+    useEffect(() => {
+        fetchAnalytics();
+    }, [activeTab, range]);
+
+    const fetchAnalytics = async () => {
+        setLoading(true);
+        setData(null); // Clear data to show skeleton on tab switch
+        try {
+            const { data: response } = await getAnalyticsData(activeTab, range);
+            // Simulate slight delay for better UX if response is too fast
+            await new Promise(resolve => setTimeout(resolve, 500));
+            setData(response);
+        } catch (error) {
+            console.error("Analytics Error", error);
+            // toast.error("Failed to load analytics"); // Suppress initial error
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Format Helpers
+    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -76,64 +156,95 @@ const Reports = () => {
                 <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="bg-card border border-border rounded-lg p-1 flex items-center">
-                            <button className="px-3 py-1 text-[10px] font-bold text-foreground bg-primary/20 rounded">This Month</button>
-                            <button className="px-3 py-1 text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors">Last Quarter</button>
-                            <button className="px-3 py-1 text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors">Yearly</button>
+                            <button
+                                onClick={() => setRange('month')}
+                                className={clsx("px-3 py-1 text-[10px] font-bold rounded transition-colors", range === 'month' ? "text-foreground bg-primary/20" : "text-muted-foreground hover:text-foreground")}
+                            >
+                                This Month
+                            </button>
+                            <button
+                                onClick={() => setRange('quarter')}
+                                className={clsx("px-3 py-1 text-[10px] font-bold rounded transition-colors", range === 'quarter' ? "text-foreground bg-primary/20" : "text-muted-foreground hover:text-foreground")}
+                            >
+                                Last Quarter
+                            </button>
+                            <button
+                                onClick={() => setRange('year')}
+                                className={clsx("px-3 py-1 text-[10px] font-bold rounded transition-colors", range === 'year' ? "text-foreground bg-primary/20" : "text-muted-foreground hover:text-foreground")}
+                            >
+                                Yearly
+                            </button>
                         </div>
                     </div>
-                    <Button variant="outline" size="sm" className="gap-2 border-border shadow-sm">
+                    <Button variant="outline" size="sm" className="gap-2 border-border shadow-sm" onClick={handleExport}>
                         <Download size={14} /> Export CSV
                     </Button>
                 </div>
 
-                <div className="max-w-6xl mx-auto space-y-6 pb-10">
+                {loading || !data ? (
+                    <ReportsSkeleton />
+                ) : (
+                    <div className="max-w-6xl mx-auto space-y-6 pb-10">
 
-                    {activeTab === 'revenue' && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <StatCard title="Total Revenue" value="₹ 12.5L" change="12.5" positive />
-                                <StatCard title="Avg. Revenue / User" value="₹ 450" change="2.1" positive />
-                                <StatCard title="Refunds Processed" value="₹ 12K" change="-5.4" positive />
-                                <StatCard title="Projected" value="₹ 15L" change="8.2" positive />
+                        {activeTab === 'revenue' && data?.cards?.totalRevenue && (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <StatCard title="Total Revenue" value={formatCurrency(data.cards.totalRevenue?.value ?? 0)} change={data.cards.totalRevenue?.change ?? 0} positive={data.cards.totalRevenue?.change > 0} />
+                                    <StatCard title="Avg. Revenue / User" value={formatCurrency(data.cards.avgRevenue?.value ?? 0)} change={data.cards.avgRevenue?.change ?? 0} positive={data.cards.avgRevenue?.change > 0} />
+                                    <StatCard title="Refunds Processed" value={formatCurrency(data.cards.refunds?.value ?? 0)} change={data.cards.refunds?.change ?? 0} positive={data.cards.refunds?.change > 0} />
+                                    <StatCard title="Projected" value={formatCurrency(data.cards.projected?.value ?? 0)} change={data.cards.projected?.change ?? 0} positive={data.cards.projected?.change > 0} />
+                                </div>
+
+                                <div className="h-[400px] w-full">
+                                    <AdminRevenueGraph
+                                        data={data.graph}
+                                        totalRevenue={data.cards.totalRevenue?.value ?? 0}
+                                        growth={data.cards.totalRevenue?.change ?? 0}
+                                    />
+                                </div>
                             </div>
+                        )}
 
-                            <div className="h-[400px] w-full">
-                                <AdminRevenueGraph />
+                        {activeTab === 'subscription' && data?.cards?.newSubscribers && (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <StatCard title="New Subscribers" value={data.cards.newSubscribers?.value ?? 0} change={data.cards.newSubscribers?.change ?? 0} positive={data.cards.newSubscribers?.change > 0} />
+                                    <StatCard title="Churn Rate" value={`${data.cards.churnRate?.value ?? 0}%`} change={data.cards.churnRate?.change ?? 0} positive={data.cards.churnRate?.change < 0} />
+                                    <StatCard title="Active Plans" value={data.cards.activePlans?.value ?? 0} change={data.cards.activePlans?.change ?? 0} positive={data.cards.activePlans?.change > 0} />
+                                    <StatCard title="Retention" value={`${data.cards.retention?.value ?? 0}%`} change={data.cards.retention?.change ?? 0} positive={data.cards.retention?.change > 0} />
+                                </div>
+
+                                <div className="h-[400px] w-full">
+                                    <GrowthGraph
+                                        data={data.graph}
+                                        totalGrowth={data.cards.newSubscribers?.value}
+                                        growthRate={data.cards.newSubscribers?.change}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {activeTab === 'subscription' && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <StatCard title="New Subscribers" value="1,240" change="8.5" positive />
-                                <StatCard title="Churn Rate" value="4.2%" change="-1.1" positive />
-                                <StatCard title="Active Plans" value="8,500" change="12.3" positive />
-                                <StatCard title="Retention" value="85%" change="0.5" positive />
+                        {activeTab === 'signals' && data?.cards?.winRate && (
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <StatCard title="Win Rate" value={`${data.cards.winRate?.value ?? 0}%`} change={data.cards.winRate?.change ?? 0} positive={data.cards.winRate?.change > 0} />
+                                    <StatCard title="Total Signals" value={data.cards.totalSignals?.value ?? 0} change={data.cards.totalSignals?.change ?? 0} positive={data.cards.totalSignals?.change > 0} />
+                                    <StatCard title="Avg. Profit" value={`${data.cards.avgProfit?.value ?? 0}%`} change={data.cards.avgProfit?.change ?? 0} positive={data.cards.avgProfit?.change > 0} />
+                                    <StatCard title="Loss Streak" value={window.innerWidth < 1000 ? "3" : (data.cards.lossStreak?.value ?? 0)} change={data.cards.lossStreak?.change ?? 0} positive={data.cards.lossStreak?.change < 0} />
+                                </div>
+
+                                <div className="h-[400px] w-full">
+                                    <PerformanceGraph
+                                        data={data.graph}
+                                        avgAccuracy={data.cards.winRate?.value}
+                                        accuracyChange={data.cards.winRate?.change}
+                                    />
+                                </div>
                             </div>
+                        )}
 
-                            <div className="h-[400px] w-full">
-                                <GrowthGraph />
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'signals' && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <StatCard title="Win Rate" value="76%" change="2.4" positive />
-                                <StatCard title="Total Signals" value="450" change="15" positive />
-                                <StatCard title="Avg. Profit" value="12%" change="1.2" positive />
-                                <StatCard title="Loss Streak" value="3" change="-10" positive />
-                            </div>
-
-                            <div className="h-[400px] w-full">
-                                <PerformanceGraph />
-                            </div>
-                        </div>
-                    )}
-
-                </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -28,6 +28,10 @@ import ExpiredSubscriptions from '../pages/subscriptions/ExpiredSubscriptions';
 import ExtendSubscription from '../pages/subscriptions/ExtendSubscription';
 import AssignPlan from '../pages/subscriptions/AssignPlan';
 
+// Strategy Management
+import AllStrategies from '../pages/strategies/AllStrategies';
+import CreateStrategy from '../pages/strategies/CreateStrategy';
+
 // Signal Management
 import AllSignals from '../pages/signals/AllSignals';
 import CreateSignal from '../pages/signals/CreateSignal';
@@ -44,7 +48,8 @@ import EditSymbol from '../pages/market/EditSymbol';
 // Support
 import AllTickets from '../pages/tickets/AllTickets';
 import CreateTicket from '../pages/tickets/CreateTicket';
-import { TicketDetails, ReplyTicket } from '../pages/tickets/TicketPages';
+import TicketDetails from '../pages/tickets/TicketDetails';
+import { ReplyTicket } from '../pages/tickets/TicketPages'; // Keep others if needed
 
 // Settings
 import Settings from '../pages/settings/Settings';
@@ -114,6 +119,10 @@ const AppRouter = () => {
                     <Route path="subscriptions/extend" element={<ExtendSubscription />} />
                     <Route path="subscriptions/assign" element={<AssignPlan />} />
 
+                    {/* Strategy Management */}
+                    <Route path="strategies/all" element={<AllStrategies />} />
+                    <Route path="strategies/create" element={<CreateStrategy />} />
+
                     {/* Signal Management */}
                     <Route path="signals/all" element={<AllSignals />} />
                     <Route path="signals/create" element={<CreateSignal />} />
@@ -131,7 +140,7 @@ const AppRouter = () => {
 
                     {/* Support / Tickets */}
                     <Route path="tickets/all" element={<AllTickets />} />
-                    <Route path="tickets/create" element={<CreateTicket />} />
+                    {/* <Route path="tickets/create" element={<CreateTicket />} /> */}
                     <Route path="tickets/details" element={<TicketDetails />} />
                     <Route path="tickets/reply" element={<ReplyTicket />} />
 

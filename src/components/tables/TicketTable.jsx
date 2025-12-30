@@ -1,8 +1,11 @@
 import React from 'react';
 import { MoreVertical, CheckCircle, Clock, AlertCircle, MessageSquare } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useNavigate } from 'react-router-dom';
 
 const TicketTable = ({ tickets }) => {
+    const navigate = useNavigate();
+
     const getPriorityColor = (priority) => {
         switch (priority) {
             case 'High': return 'text-red-500 bg-red-500/10 border-red-500/20';
@@ -39,51 +42,66 @@ const TicketTable = ({ tickets }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
-                        {tickets.map((ticket, index) => (
-                            <tr key={index} className="hover:bg-primary/[0.02] transition-colors group relative">
-                                <td className="px-5 py-3 border-r border-border font-bold text-muted-foreground">
-                                    {ticket.id}
-                                </td>
-                                <td className="px-5 py-3 border-r border-border">
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="text-foreground font-sans font-bold">{ticket.subject}</span>
-                                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
-                                            <span className="bg-secondary px-1 py-0.5 rounded">{ticket.category}</span>
+                        {tickets.map((ticket, index) => {
+                            // Safe User Handling
+                            const userName = ticket.user?.name || 'Unknown User';
+                            const userInitials = userName.substring(0, 2).toUpperCase();
+                            const userEmail = ticket.user?.email || '';
+
+                            // Safe Date Handling
+                            const dateStr = ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : '-';
+
+                            return (
+                                <tr key={index} className="hover:bg-primary/[0.02] transition-colors group relative">
+                                    <td className="px-5 py-3 border-r border-border font-bold text-muted-foreground">
+                                        {ticket.ticketId || ticket._id?.substring(0, 8)}
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-border">
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-foreground font-sans font-bold">{ticket.subject}</span>
+                                            <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                                                <span className="bg-secondary px-1 py-0.5 rounded">{ticket.category}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 border-r border-border">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-[9px] font-bold border border-white/10 uppercase">
-                                            {ticket.user.substring(0, 2)}
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-border">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-[9px] font-bold border border-white/10 uppercase">
+                                                {userInitials}
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-foreground text-[10px] font-bold">{userName}</span>
+                                                {userEmail && <span className="text-[9px] text-muted-foreground">{userEmail}</span>}
+                                            </div>
                                         </div>
-                                        <span className="text-foreground">{ticket.user}</span>
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 border-r border-border font-mono text-muted-foreground">
-                                    {ticket.ipAddress || '-'}
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border">
-                                    <span className={clsx("px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider", getPriorityColor(ticket.priority))}>
-                                        {ticket.priority}
-                                    </span>
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border">
-                                    <div className={clsx("flex items-center justify-center gap-1 font-bold uppercase tracking-wider text-[10px]", getStatusColor(ticket.status))}>
-                                        {ticket.status === 'Open' ? <AlertCircle size={10} /> : <CheckCircle size={10} />}
-                                        {ticket.status}
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border text-muted-foreground">
-                                    {ticket.date}
-                                </td>
-                                <td className="px-5 py-3 text-center">
-                                    <button className="p-1.5 hover:bg-muted/20 rounded text-muted-foreground hover:text-foreground transition-all">
-                                        <MoreVertical size={14} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-border font-mono text-muted-foreground">
+                                        {ticket.ipAddress || '-'}
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border">
+                                        <span className={clsx("px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider", getPriorityColor(ticket.priority))}>
+                                            {ticket.priority}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border">
+                                        <div className={clsx("flex items-center justify-center gap-1 font-bold uppercase tracking-wider text-[10px]", getStatusColor(ticket.status))}>
+                                            {ticket.status === 'Open' || ticket.status === 'OPEN' ? <AlertCircle size={10} /> : <CheckCircle size={10} />}
+                                            {ticket.status}
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border text-muted-foreground">
+                                        {dateStr}
+                                    </td>
+                                    <td className="px-5 py-3 text-center">
+                                        <button
+                                            onClick={() => navigate(`/tickets/details?id=${ticket._id}`)}
+                                            className="p-1.5 hover:bg-muted/20 rounded text-muted-foreground hover:text-foreground transition-all">
+                                            <MessageSquare size={14} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

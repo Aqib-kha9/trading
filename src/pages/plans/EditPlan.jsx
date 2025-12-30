@@ -40,6 +40,16 @@ const EditPlan = () => {
 
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [segments, setSegments] = useState([]);
+
+    // Fetch Segments
+    useEffect(() => {
+        const loadSegments = async () => {
+            const data = await import('../../api/market.api').then(m => m.getSegments());
+            setSegments(data);
+        };
+        loadSegments();
+    }, []);
 
     // Feature State
     const [selectedFeatures, setSelectedFeatures] = useState([]);
@@ -157,7 +167,7 @@ const EditPlan = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
                 {/* 1. Basic Configuration Card */}
-                <Card className="p-6 space-y-6">
+                <Card className="p-6 space-y-6 overflow-visible">
                     <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-border pb-2">
                         <CreditCard size={18} className="text-primary" /> Plan Details
                     </h2>
@@ -172,27 +182,41 @@ const EditPlan = () => {
 
                         <div className="space-y-1.5">
                             <label className="text-xs font-medium text-muted-foreground block">Plan Type</label>
-                            <select
-                                {...register('isDemo')}
-                                className="w-full h-10 px-3 rounded-md bg-secondary/50 border border-input text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            >
-                                <option value={false}>Premium (Paid)</option>
-                                <option value={true}>Demo (Trial / Free)</option>
-                            </select>
+                            <Controller
+                                name="isDemo"
+                                control={control}
+                                render={({ field }) => (
+                                    <SearchableSelect
+                                        options={[
+                                            { label: 'Premium (Paid)', value: false },
+                                            { label: 'Demo (Trial / Free)', value: true }
+                                        ]}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select Type..."
+                                        searchable={false}
+                                        variant="standard"
+                                    />
+                                )}
+                            />
                         </div>
 
                         <div className="space-y-1.5">
                             <label className="text-xs font-medium text-muted-foreground block">Segment Access</label>
-                            <select
-                                {...register('segment')}
-                                className="w-full h-10 px-3 rounded-md bg-secondary/50 border border-input text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            >
-                                <option value="">Select Segment...</option>
-                                <option value="EQUITY">Equity (Cash)</option>
-                                <option value="FNO">F&O (Derivatives)</option>
-                                <option value="COMMODITY">Commodity (MCX)</option>
-                                <option value="CURRENCY">Currency (Forex)</option>
-                            </select>
+                            <Controller
+                                name="segment"
+                                control={control}
+                                render={({ field }) => (
+                                    <SearchableSelect
+                                        options={segments.map(seg => ({ label: seg.name, value: seg.code }))}
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="Select Segment..."
+                                        searchable={false}
+                                        variant="standard"
+                                    />
+                                )}
+                            />
                             {errors.segment && <p className="text-xs text-red-500">{errors.segment.message}</p>}
                         </div>
 

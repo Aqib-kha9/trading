@@ -277,25 +277,74 @@ const MarketData = () => {
         return () => { observer.disconnect(); chart.remove(); };
     }, [chartType, features, themeVersion, chartSettings]); // Dependent on sidebarWidth for resizing
 
-    // Data Update (Simulated)
+    // --- Socket Connection for Live Data ---
+    useEffect(() => {
+        // Dynamic import to avoid SSR issues if any (React is CSR but safe practice)
+        import('../../api/socket').then(({ socket }) => {
+            if (!socket) return;
+
+            // Subscribe to symbol updates
+            // In a real scenario, we might join specific rooms. 
+            // Here, backend broadcasts to room=symbol.
+
+            const handleTick = (tick) => {
+                const { symbol, price } = tick;
+
+                // Update Chart if matching
+                if (selectedSymbol && selectedSymbol.symbol === symbol && seriesRef.current.main) {
+                    const time = Math.floor(Date.now() / 1000);
+                    // For simpler charts, just update the last bar or add new
+                    // Ideally we fetch history THEN update. Here we just stream.
+                    const bar = {
+                        time,
+                        open: price, high: price, low: price, close: price, value: price
+                    };
+                    seriesRef.current.main.update(bar);
+                }
+
+                // Update Watchlist (MARKET_DATA)
+                // Need a state for market data instead of constant
+                // This part requires refactoring the constant MARKET_DATA to state 
+            };
+
+            // Join rooms for all symbols we care about
+            const allSyms = Object.values(MARKET_DATA).flat();
+            allSyms.forEach(s => socket.emit('subscribe', s.symbol));
+
+            socket.on('tick', handleTick);
+
+            return () => {
+                socket.off('tick', handleTick);
+                allSyms.forEach(s => socket.emit('unsubscribe', s.symbol));
+            };
+        });
+    }, [selectedSymbol]); // Re-sub if symbol list changes (static for now)
+
+    // Initial Data Load (Mock History)
     useEffect(() => {
         if (!selectedSymbol || !chartRef.current) return;
+
+        // Generate initial history only once when symbol changes
         const data = [];
         let price = parseFloat(selectedSymbol.price.replace(/,/g, ''));
-        let time = Math.floor(Date.now() / 1000) - 300 * 500;
-        for (let i = 0; i < 500; i++) {
+        let time = Math.floor(Date.now() / 1000) - 300 * 100; // 100 candles back
+
+        for (let i = 0; i < 100; i++) {
             const move = (Math.random() - 0.5) * (price * 0.005);
             price += move;
             data.push({ time, open: price, high: price + Math.abs(move), low: price - Math.abs(move), close: price + move / 2, value: price });
             time += 300;
         }
+
         const series = seriesRef.current.main;
         if (['Candle', 'Bar', 'Hollow', 'HeikinAshi'].includes(chartType)) series.setData(data);
         else if (chartType === 'Columns') series.setData(data.map(d => ({ time: d.time, value: d.close, color: d.close > d.open ? '#089981' : '#f23645' })));
         else series.setData(data.map(d => ({ time: d.time, value: d.value })));
+
         if (chartType === 'Baseline') series.applyOptions({ baseValue: { type: 'price', price: price } });
+
         chartRef.current.timeScale().fitContent();
-        chartRef.current.applyOptions({ watermark: { visible: chartSettings.showWatermark, fontSize: 24, horzAlign: 'center', vertAlign: 'center', color: 'rgba(128, 128, 128, 0.1)', text: `\${selectedSymbol.symbol} • \${timeFrame} • Market` } });
+        chartRef.current.applyOptions({ watermark: { visible: chartSettings.showWatermark, fontSize: 24, horzAlign: 'center', vertAlign: 'center', color: 'rgba(128, 128, 128, 0.1)', text: `${selectedSymbol.symbol} • ${timeFrame} • Market` } }); // Fix: template literal escape
     }, [selectedSymbol, chartType, chartSettings, timeFrame]);
 
     useEffect(() => { if (!selectedSymbol) setSelectedSymbol(MARKET_DATA.indices[0]); }, []);

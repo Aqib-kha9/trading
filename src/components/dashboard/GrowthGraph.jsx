@@ -1,36 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Maximize2, Calendar, Users, ArrowUpRight } from 'lucide-react';
+import { Maximize2, ArrowUpRight } from 'lucide-react';
 import { useTheme } from '../../components/theme-provider';
 
-const GrowthGraph = ({ filter = 'month' }) => {
+const GrowthGraph = ({ data, totalGrowth, growthRate }) => {
     const { theme } = useTheme();
-    const [data, setData] = useState([]);
 
-    // Mock Data Sets
-    const datasets = {
-        month: [
-            { time: 'Week 1', newUsers: 150, churned: 20 },
-            { time: 'Week 2', newUsers: 180, churned: 25 },
-            { time: 'Week 3', newUsers: 210, churned: 15 },
-            { time: 'Week 4', newUsers: 190, churned: 30 },
-        ],
-        quarter: [
-            { time: 'Oct', newUsers: 600, churned: 80 },
-            { time: 'Nov', newUsers: 850, churned: 60 },
-            { time: 'Dec', newUsers: 920, churned: 75 },
-        ],
-        year: [
-            { time: 'Q1', newUsers: 1200, churned: 150 },
-            { time: 'Q2', newUsers: 1500, churned: 180 },
-            { time: 'Q3', newUsers: 2100, churned: 200 },
-            { time: 'Q4', newUsers: 2800, churned: 250 },
-        ],
-    };
-
-    useEffect(() => {
-        setData(datasets[filter] || datasets['month']);
-    }, [filter]);
+    // Use passed data or fallback to empty array to prevent crashes
+    const chartData = data || [];
 
     return (
         <div className="h-full flex flex-col bg-background/50 border border-white/5 rounded-xl shadow-xl overflow-hidden relative group hover:border-blue-500/50 transition-all duration-500">
@@ -46,7 +23,7 @@ const GrowthGraph = ({ filter = 'month' }) => {
                     <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_#3b82f6]"></div>
                     <div className="flex flex-col">
                         <span className="text-sm font-bold tracking-tight text-white/90 flex items-center gap-2">
-                            USER ACQUISITION <span className="text-[10px] text-muted-foreground font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/5 uppercase">{filter === 'month' ? 'Current Month' : filter === 'quarter' ? 'Q4 2024' : '2024 YTD'}</span>
+                            USER ACQUISITION
                         </span>
                     </div>
                 </div>
@@ -61,8 +38,10 @@ const GrowthGraph = ({ filter = 'month' }) => {
                 <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Net Growth</span>
                     <span className="text-3xl font-bold text-white tracking-tight flex items-end gap-2">
-                        {filter === 'month' ? '+1,250' : filter === 'quarter' ? '+3,850' : '+15,400'}
-                        <span className="text-sm font-medium text-blue-500 mb-1.5 flex items-center gap-0.5">+15% <ArrowUpRight size={12} /></span>
+                        {totalGrowth ? `+${totalGrowth}` : '...'}
+                        <span className="text-sm font-medium text-blue-500 mb-1.5 flex items-center gap-0.5">
+                            {growthRate > 0 ? '+' : ''}{growthRate}% <ArrowUpRight size={12} />
+                        </span>
                     </span>
                 </div>
             </div>
@@ -70,7 +49,7 @@ const GrowthGraph = ({ filter = 'month' }) => {
             {/* Chart Area */}
             <div className="flex-1 w-full min-h-0 pt-10">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorNew" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />

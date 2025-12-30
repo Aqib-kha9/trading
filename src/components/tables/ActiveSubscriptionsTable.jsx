@@ -16,7 +16,7 @@ const ActiveSubscriptionsTable = ({ subscriptions }) => {
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Start Date</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Expiry Date</th>
                             <th className="px-5 py-3 border-r border-border w-48 bg-muted/90 backdrop-blur-sm">Validity Progress</th>
-                            <th className="px-5 py-3 text-center bg-muted/90 backdrop-blur-sm">Actions</th>
+                            <th className="px-5 py-3 text-center bg-muted/90 backdrop-blur-sm">Last Login IP</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
@@ -60,10 +60,8 @@ const ActiveSubscriptionsTable = ({ subscriptions }) => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-3 text-center">
-                                        <button className="p-1.5 hover:bg-muted/20 rounded text-muted-foreground hover:text-foreground transition-all">
-                                            <MoreVertical size={14} />
-                                        </button>
+                                    <td className="px-5 py-3 text-center text-muted-foreground">
+                                        {sub.lastLoginIp || '-'}
                                     </td>
                                 </tr>
                             );

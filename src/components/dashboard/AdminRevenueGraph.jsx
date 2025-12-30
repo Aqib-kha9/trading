@@ -3,44 +3,18 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Maximize2, MoreHorizontal, Calendar, ArrowUpRight } from 'lucide-react';
 import { useTheme } from '../../components/theme-provider';
 
-const AdminRevenueGraph = ({ filter = 'month' }) => {
+const AdminRevenueGraph = ({ data, totalRevenue, growth }) => {
     const { theme } = useTheme();
 
-    const [data, setData] = useState([]);
+    // Format Data for Chart if needed (or rely on API keys)
+    // API sends: { date: '2024-12-01', value: 1000 }
+    // Chart expects: time, revenue
 
-    // Mock Data Sets
-    const datasets = {
-        month: [
-            { time: '01 Dec', revenue: 45000, users: 120 },
-            { time: '05 Dec', revenue: 52000, users: 135 },
-            { time: '10 Dec', revenue: 49000, users: 140 },
-            { time: '15 Dec', revenue: 63000, users: 158 },
-            { time: '20 Dec', revenue: 58000, users: 162 },
-            { time: '25 Dec', revenue: 75000, users: 185 },
-            { time: '30 Dec', revenue: 82000, users: 210 },
-        ],
-        quarter: [
-            { time: 'Oct W1', revenue: 150000, users: 450 },
-            { time: 'Oct W2', revenue: 165000, users: 480 },
-            { time: 'Nov W1', revenue: 180000, users: 520 },
-            { time: 'Nov W2', revenue: 175000, users: 550 },
-            { time: 'Dec W1', revenue: 210000, users: 620 },
-            { time: 'Dec W2', revenue: 250000, users: 750 },
-        ],
-        year: [
-            { time: 'Jan', revenue: 450000, users: 1200 },
-            { time: 'Mar', revenue: 520000, users: 1350 },
-            { time: 'May', revenue: 680000, users: 1500 },
-            { time: 'Jul', revenue: 750000, users: 1850 },
-            { time: 'Sep', revenue: 920000, users: 2100 },
-            { time: 'Nov', revenue: 1100000, users: 2400 },
-            { time: 'Dec', revenue: 1250000, users: 2800 },
-        ],
-    };
-
-    useEffect(() => {
-        setData(datasets[filter] || datasets['month']);
-    }, [filter]);
+    const chartData = data ? data.map(d => ({
+        time: new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), // 01 Dec
+        revenue: d.value,
+        users: 0 // Placeholder until User Analytics API provides daily stats
+    })) : [];
 
     return (
         <div className="h-full flex flex-col bg-background/50 border border-white/5 rounded-xl shadow-xl overflow-hidden relative group hover:border-primary/50 transition-all duration-500">
@@ -56,7 +30,7 @@ const AdminRevenueGraph = ({ filter = 'month' }) => {
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]"></div>
                     <div className="flex flex-col">
                         <span className="text-sm font-bold tracking-tight text-white/90 flex items-center gap-2">
-                            REVENUE GROWTH <span className="text-[10px] text-muted-foreground font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/5 uppercase">{filter === 'month' ? 'Current Month' : filter === 'quarter' ? 'Q4 2024' : '2024 YTD'}</span>
+                            REVENUE GROWTH
                         </span>
                     </div>
                 </div>
@@ -71,8 +45,10 @@ const AdminRevenueGraph = ({ filter = 'month' }) => {
                 <div className="flex flex-col">
                     <span className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest">Total Revenue</span>
                     <span className="text-3xl font-bold text-white tracking-tight flex items-end gap-2">
-                        {filter === 'month' ? '₹ 8,50,000' : filter === 'quarter' ? '₹ 45,20,000' : '₹ 1,80,00,000'}
-                        <span className="text-sm font-medium text-emerald-500 mb-1.5 flex items-center gap-0.5">+12.5% <ArrowUpRight size={12} /></span>
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalRevenue || 0)}
+                        <span className="text-sm font-medium text-emerald-500 mb-1.5 flex items-center gap-0.5">
+                            {growth > 0 ? '+' : ''}{growth}% <ArrowUpRight size={12} />
+                        </span>
                     </span>
                 </div>
             </div>
@@ -80,15 +56,11 @@ const AdminRevenueGraph = ({ filter = 'month' }) => {
             {/* Chart Area */}
             <div className="flex-1 w-full min-h-0 pt-10">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                            </linearGradient>
-                            <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
-                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
@@ -121,15 +93,6 @@ const AdminRevenueGraph = ({ filter = 'month' }) => {
                             strokeWidth={2}
                             fillOpacity={1}
                             fill="url(#colorRevenue)"
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="users"
-                            stroke="#3b82f6"
-                            strokeWidth={2}
-                            fillOpacity={1}
-                            fill="url(#colorUsers)"
-                            connectNulls
                         />
                     </AreaChart>
                 </ResponsiveContainer>

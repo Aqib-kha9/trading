@@ -87,6 +87,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { name: 'Plans', path: '/plans/all', icon: CreditCard },
         { name: 'Subscriptions', path: '/subscriptions/all', icon: RefreshCcw },
         { name: 'Signals', path: '/signals/all', icon: Radio },
+        { name: 'Strategies', path: '/strategies/all', icon: Cpu },
         {
             name: 'Market Data',
             icon: BarChart2,

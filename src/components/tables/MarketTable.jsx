@@ -1,7 +1,7 @@
 import React from 'react';
-import { MoreVertical, CheckCircle, XCircle, Database } from 'lucide-react';
+import { MoreVertical, CheckCircle, XCircle, Trash2, Edit } from 'lucide-react';
 
-const MarketTable = ({ symbols }) => {
+const MarketTable = ({ symbols, onEdit, onDelete, isLoading }) => {
     return (
         <div className="terminal-panel w-full h-full overflow-hidden border border-border bg-card rounded-lg shadow-2xl relative flex flex-col">
             {/* Table Header Backdrop */}
@@ -13,50 +13,81 @@ const MarketTable = ({ symbols }) => {
                         <tr>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Instrument</th>
                             <th className="px-5 py-3 border-r border-border bg-muted/90 backdrop-blur-sm">Exchange</th>
-                            <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Type</th>
+                            <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Segment</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Lot Size</th>
                             <th className="px-5 py-3 border-r border-border text-center bg-muted/90 backdrop-blur-sm">Data Feed</th>
                             <th className="px-5 py-3 text-center bg-muted/90 backdrop-blur-sm">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
-                        {symbols.map((sym, index) => (
-                            <tr key={index} className="hover:bg-primary/[0.02] transition-colors group relative">
-                                <td className="px-5 py-3 border-r border-border">
-                                    <div className="flex flex-col">
-                                        <span className="text-foreground font-sans font-bold">{sym.symbol}</span>
-                                        <span className="text-[9px] text-muted-foreground">{sym.name || sym.symbol}</span>
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 border-r border-border">
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-1.5 py-0.5 rounded bg-secondary/50 text-[9px] font-bold text-muted-foreground">
-                                            {sym.exchange}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border text-muted-foreground">
-                                    {sym.type || 'DERIVATIVE'}
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border font-bold text-primary font-mono">
-                                    {sym.lotSize}
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border">
-                                    <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider flex items-center justify-center gap-1.5 w-fit mx-auto ${sym.status !== 'Inactive'
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <tr key={i} className="animate-pulse">
+                                    <td className="px-5 py-4 border-r border-border">
+                                        <div className="space-y-2">
+                                            <div className="h-3 w-24 bg-white/10 rounded"></div>
+                                            <div className="h-2 w-16 bg-white/5 rounded"></div>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-4 border-r border-border"><div className="h-3 w-12 bg-white/5 rounded mx-auto"></div></td>
+                                    <td className="px-5 py-4 border-r border-border"><div className="h-3 w-20 bg-white/5 rounded mx-auto"></div></td>
+                                    <td className="px-5 py-4 border-r border-border"><div className="h-3 w-8 bg-white/5 rounded mx-auto"></div></td>
+                                    <td className="px-5 py-4 border-r border-border"><div className="h-5 w-16 bg-white/5 rounded mx-auto"></div></td>
+                                    <td className="px-5 py-4"><div className="h-4 w-12 bg-white/5 rounded mx-auto"></div></td>
+                                </tr>
+                            ))
+                        ) : (
+                            symbols.map((sym, index) => (
+                                <tr key={index} className="hover:bg-primary/[0.02] transition-colors group relative">
+                                    <td className="px-5 py-3 border-r border-border">
+                                        <div className="flex flex-col">
+                                            <span className="text-foreground font-sans font-bold">{sym.symbol}</span>
+                                            <span className="text-[9px] text-muted-foreground">{sym.name || sym.symbol}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-border">
+                                        <div className="flex items-center gap-2">
+                                            <span className="px-1.5 py-0.5 rounded bg-secondary/50 text-[9px] font-bold text-muted-foreground">
+                                                {sym.exchange}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border text-muted-foreground">
+                                        {sym.segment}
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border font-bold text-primary font-mono">
+                                        {sym.lotSize}
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border">
+                                        <span className={`px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider flex items-center justify-center gap-1.5 w-fit mx-auto ${sym.isActive
                                             ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5'
                                             : 'border-red-500/20 text-red-500 bg-red-500/5'
-                                        }`}>
-                                        {sym.status !== 'Inactive' ? <CheckCircle size={10} /> : <XCircle size={10} />}
-                                        {sym.status || 'Active'}
-                                    </span>
-                                </td>
-                                <td className="px-5 py-3 text-center">
-                                    <button className="p-1.5 hover:bg-muted/20 rounded text-muted-foreground hover:text-foreground transition-all">
-                                        <MoreVertical size={14} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                            }`}>
+                                            {sym.isActive ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                                            {sym.isActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button
+                                                onClick={() => onEdit && onEdit(sym)}
+                                                className="p-1.5 hover:bg-white/10 rounded text-muted-foreground hover:text-primary transition-all"
+                                                title="Edit Symbol"
+                                            >
+                                                <Edit size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => onDelete && onDelete(sym)}
+                                                className="p-1.5 hover:bg-red-500/10 rounded text-muted-foreground hover:text-red-500 transition-all"
+                                                title="Delete Symbol"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )))}
+
                     </tbody>
                 </table>
             </div>
