@@ -10,10 +10,12 @@ const AdminRevenueGraph = ({ data, totalRevenue, growth }) => {
     // API sends: { date: '2024-12-01', value: 1000 }
     // Chart expects: time, revenue
 
+    // Data comes pre-formatted from backend or needs simple mapping
+    // Backend sends: [{ date: '2024-12-01', value: 1000 }]
+
     const chartData = data ? data.map(d => ({
-        time: new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), // 01 Dec
-        revenue: d.value,
-        users: 0 // Placeholder until User Analytics API provides daily stats
+        time: new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+        revenue: d.value
     })) : [];
 
     return (

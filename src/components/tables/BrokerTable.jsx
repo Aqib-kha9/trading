@@ -1,8 +1,8 @@
 import React from 'react';
-import { MoreVertical, CheckCircle, XCircle, Users, TrendingUp, AlertCircle, Percent, DollarSign, IndianRupee } from 'lucide-react';
+import { MoreVertical, CheckCircle, XCircle, Users, TrendingUp, AlertCircle, Percent, DollarSign, IndianRupee, Trash2, Eye, Pencil } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const BrokerTable = ({ brokers, onAction }) => {
+const BrokerTable = ({ brokers, onAction, isLoading }) => {
     return (
         <div className="terminal-panel w-full h-full overflow-hidden border border-border bg-card rounded-lg shadow-2xl relative flex flex-col">
             {/* Table Header Backdrop */}
@@ -22,71 +22,90 @@ const BrokerTable = ({ brokers, onAction }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 bg-transparent text-[11px] font-medium font-mono">
-                        {brokers.map((broker, index) => (
-                            <tr key={index} className="hover:bg-primary/[0.02] transition-colors group relative">
-                                <td className="px-5 py-3 border-r border-border font-bold text-muted-foreground">
-                                    {broker.id}
-                                </td>
-                                <td className="px-5 py-3 border-r border-border">
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="text-foreground font-sans font-bold">{broker.name}</span>
-                                        <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
-                                            <span>{broker.location}</span>
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="7" className="h-[400px] text-center">
+                                    <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground animate-pulse">
+                                        <div className="animate-spin text-primary">
+                                            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-5 py-3 border-r border-border text-center">
-                                    <div className="flex items-center justify-center gap-1 font-bold text-foreground">
-                                        <Users size={12} className="text-primary/70" />
-                                        {broker.clients}
-                                    </div>
-                                </td>
-
-                                {/* Commission Column */}
-                                <td className="px-5 py-3 border-r border-border text-center">
-                                    <div className={clsx(
-                                        "inline-flex items-center gap-1 px-2 py-0.5 rounded font-bold uppercase",
-                                        broker.commission.type === 'PERCENTAGE' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-                                    )}>
-                                        {broker.commission.type === 'PERCENTAGE' ? <Percent size={10} /> : <IndianRupee size={10} />}
-                                        {broker.commission.value}{broker.commission.type === 'PERCENTAGE' ? '%' : ''}
-                                    </div>
-                                </td>
-
-                                <td className="px-5 py-3 border-r border-border text-center text-emerald-500 font-bold">
-                                    {broker.revenue}
-                                </td>
-                                <td className="px-5 py-3 text-center border-r border-border">
-                                    <span className={clsx(
-                                        "px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider flex items-center justify-center gap-1 w-fit mx-auto",
-                                        broker.status === 'Active' ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' :
-                                            broker.status === 'Inactive' ? 'text-slate-400 bg-slate-500/10 border-slate-500/20' :
-                                                'text-red-500 bg-red-500/10 border-red-500/20'
-                                    )}>
-                                        {broker.status === 'Active' && <CheckCircle size={10} />}
-                                        {broker.status === 'Inactive' && <AlertCircle size={10} />}
-                                        {broker.status === 'Blocked' && <XCircle size={10} />}
-                                        {broker.status}
-                                    </span>
-                                </td>
-                                <td className="px-5 py-3 text-center">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <button
-                                            onClick={() => onAction('view', broker)}
-                                            className="p-1.5 hover:bg-muted/20 rounded text-muted-foreground hover:text-primary transition-all" title="View Details"
-                                        >
-                                            <TrendingUp size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => onAction('edit', broker)}
-                                            className="p-1.5 hover:bg-muted/20 rounded text-muted-foreground hover:text-foreground transition-all" title="Edit"
-                                        >
-                                            <MoreVertical size={14} />
-                                        </button>
+                                        <span className="text-xs font-mono uppercase tracking-widest">Loading Partner Data...</span>
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            brokers.map((broker, index) => (
+                                <tr key={index} className="hover:bg-primary/[0.02] transition-colors group relative">
+                                    <td className="px-5 py-3 border-r border-border font-bold text-muted-foreground">
+                                        {broker.brokerId || broker.id}
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-border">
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-foreground font-sans font-bold">{broker.name}</span>
+                                            <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                                                <span>{broker.location}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-3 border-r border-border text-center">
+                                        <div className="flex items-center justify-center gap-1 font-bold text-foreground">
+                                            <Users size={12} className="text-primary/70" />
+                                            {broker.totalClients || 0}
+                                        </div>
+                                    </td>
+
+                                    {/* Commission Column */}
+                                    <td className="px-5 py-3 border-r border-border text-center">
+                                        <div className={clsx(
+                                            "inline-flex items-center gap-1 px-2 py-0.5 rounded font-bold uppercase",
+                                            broker.commission.type === 'PERCENTAGE' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                        )}>
+                                            {broker.commission.type === 'PERCENTAGE' ? <Percent size={10} /> : <IndianRupee size={10} />}
+                                            {broker.commission.value}{broker.commission.type === 'PERCENTAGE' ? '%' : ''}
+                                        </div>
+                                    </td>
+
+                                    <td className="px-5 py-3 border-r border-border text-center text-emerald-500 font-bold">
+                                        ₹ {(broker.totalRevenue || 0).toLocaleString()}
+                                    </td>
+                                    <td className="px-5 py-3 text-center border-r border-border">
+                                        <span className={clsx(
+                                            "px-2 py-0.5 border rounded-[4px] text-[9px] uppercase font-bold tracking-wider flex items-center justify-center gap-1 w-fit mx-auto",
+                                            broker.status === 'Active' ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' :
+                                                broker.status === 'Inactive' ? 'text-slate-400 bg-slate-500/10 border-slate-500/20' :
+                                                    'text-red-500 bg-red-500/10 border-red-500/20'
+                                        )}>
+                                            {broker.status === 'Active' && <CheckCircle size={10} />}
+                                            {broker.status === 'Inactive' && <AlertCircle size={10} />}
+                                            {broker.status === 'Blocked' && <XCircle size={10} />}
+                                            {broker.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <button
+                                                onClick={() => onAction('view', broker)}
+                                                className="p-1.5 hover:bg-blue-500/10 rounded text-muted-foreground hover:text-blue-400 transition-all" title="View Details"
+                                            >
+                                                <Eye size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => onAction('edit', broker)}
+                                                className="p-1.5 hover:bg-emerald-500/10 rounded text-muted-foreground hover:text-emerald-400 transition-all" title="Edit"
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => onAction('delete', broker)}
+                                                className="p-1.5 hover:bg-red-500/10 rounded text-muted-foreground hover:text-red-400 transition-all" title="Delete"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

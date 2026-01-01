@@ -4,10 +4,16 @@ import { Settings as SettingsIcon, Shield, Headphones, CreditCard, Bell, Save, P
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 
+import { getAllSettings, updateBulkSettings } from '../../api/settings.api';
+import useToast from '../../hooks/useToast';
+
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('admin'); // admin, support, appearance, payment, notifications
     const [currentFont, setCurrentFont] = useState('Outfit');
     const [currentTheme, setCurrentTheme] = useState('theme-navy');
+    const [settings, setSettings] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+    const toast = useToast();
 
     // Available Fonts
     const FONTS = [
@@ -39,6 +45,8 @@ const Settings = () => {
     ];
 
     useEffect(() => {
+        loadSettings();
+
         // Load font preference
         const savedFont = localStorage.getItem('theme-font');
         if (savedFont) {
@@ -51,6 +59,40 @@ const Settings = () => {
         setCurrentTheme(savedTheme);
         document.body.className = savedTheme; // Apply to body
     }, []);
+
+    const loadSettings = async () => {
+        setIsLoading(true);
+        try {
+            const data = await getAllSettings();
+            setSettings(data);
+        } catch (error) {
+            console.error("Failed to load settings", error);
+            toast.error("Failed to load settings");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSettingChange = (key, value) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+    };
+
+    const saveSettings = async (keysToSave) => {
+        setIsLoading(true);
+        try {
+            const updates = {};
+            keysToSave.forEach(key => {
+                updates[key] = settings[key];
+            });
+            await updateBulkSettings(updates);
+            toast.success("Settings updated successfully");
+        } catch (error) {
+            console.error("Failed to save settings", error);
+            toast.error("Failed to save settings");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleFontChange = (fontName) => {
         setCurrentFont(fontName);
@@ -132,15 +174,32 @@ const Settings = () => {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-muted-foreground uppercase">System Name</label>
-                                        <input type="text" defaultValue="MasterStroke Trading" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" />
+                                        <input
+                                            type="text"
+                                            value={settings.system_name || ''}
+                                            onChange={(e) => handleSettingChange('system_name', e.target.value)}
+                                            placeholder="MasterStroke Trading"
+                                            className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-muted-foreground uppercase">Support Email</label>
-                                        <input type="text" defaultValue="support@mspk.com" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" />
+                                        <input
+                                            type="text"
+                                            value={settings.support_email || ''}
+                                            onChange={(e) => handleSettingChange('support_email', e.target.value)}
+                                            placeholder="support@mspk.com"
+                                            className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                        />
                                     </div>
                                 </div>
                                 <div className="pt-4 border-t border-white/5 flex justify-end">
-                                    <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
+                                    <Button
+                                        variant="primary"
+                                        className="gap-2 shadow-lg shadow-primary/20"
+                                        onClick={() => saveSettings(['system_name', 'support_email'])}
+                                        isLoading={isLoading}
+                                    >
                                         <Save size={16} /> Save Changes
                                     </Button>
                                 </div>
@@ -155,7 +214,6 @@ const Settings = () => {
                                 <h3 className="text-sm font-bold uppercase tracking-widest text-foreground">Appearance & Typography</h3>
                             </div>
                             <div className="p-6 space-y-8">
-
                                 {/* Theme Selection */}
                                 <div className="space-y-4">
                                     <label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
@@ -207,7 +265,7 @@ const Settings = () => {
                                                 onClick={() => handleFontChange(font.name)}
                                                 className={clsx(
                                                     "p-4 rounded-lg border text-left transition-all hover:scale-[1.02]",
-                                                    font.class, // APPLY FONT CLASS HERE TO CONTAINER
+                                                    font.class,
                                                     currentFont === font.name
                                                         ? "bg-primary/10 border-primary shadow-[0_0_15px_rgba(250,204,21,0.1)]"
                                                         : "bg-secondary/10 border-border hover:bg-secondary/30 hover:border-primary/30"
@@ -234,36 +292,64 @@ const Settings = () => {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-muted-foreground uppercase">Helpdesk Email</label>
-                                        <input type="email" defaultValue="help@masterstroke.com" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" />
+                                        <input
+                                            type="email"
+                                            value={settings.helpdesk_email || ''}
+                                            onChange={(e) => handleSettingChange('helpdesk_email', e.target.value)}
+                                            placeholder="help@masterstroke.com"
+                                            className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-muted-foreground uppercase">Contact Number</label>
-                                        <input type="text" defaultValue="+91 98765 43210" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" />
+                                        <input
+                                            type="text"
+                                            value={settings.contact_number || ''}
+                                            onChange={(e) => handleSettingChange('contact_number', e.target.value)}
+                                            placeholder="+91 98765 43210"
+                                            className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                        />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-muted-foreground uppercase">Operating Hours</label>
-                                    <input type="text" defaultValue="Mon - Fri, 9:00 AM - 6:00 PM IST" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" />
+                                    <input
+                                        type="text"
+                                        value={settings.operating_hours || ''}
+                                        onChange={(e) => handleSettingChange('operating_hours', e.target.value)}
+                                        placeholder="Mon - Fri, 9:00 AM - 6:00 PM IST"
+                                        className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                    />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-top border-border">
                                     <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-secondary/10">
                                         <span className="text-xs font-bold text-foreground">Enable Live Chat</span>
-                                        <div className="w-8 h-4 bg-primary/20 rounded-full relative cursor-pointer border border-primary/50">
-                                            <div className="absolute right-0.5 top-0.5 h-2.5 w-2.5 bg-primary rounded-full shadow-sm"></div>
+                                        <div
+                                            onClick={() => handleSettingChange('enable_live_chat', !settings.enable_live_chat)}
+                                            className={`w-8 h-4 rounded-full relative cursor-pointer border transition-colors ${settings.enable_live_chat ? 'bg-primary/20 border-primary/50' : 'bg-secondary border-border'}`}
+                                        >
+                                            <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full shadow-sm transition-all ${settings.enable_live_chat ? 'right-0.5 bg-primary' : 'left-0.5 bg-muted-foreground'}`}></div>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between p-3 border border-border rounded-lg bg-secondary/10">
                                         <span className="text-xs font-bold text-foreground">Ticket System</span>
-                                        <div className="w-8 h-4 bg-primary/20 rounded-full relative cursor-pointer border border-primary/50">
-                                            <div className="absolute right-0.5 top-0.5 h-2.5 w-2.5 bg-primary rounded-full shadow-sm"></div>
+                                        <div
+                                            onClick={() => handleSettingChange('enable_ticket_system', !settings.enable_ticket_system)}
+                                            className={`w-8 h-4 rounded-full relative cursor-pointer border transition-colors ${settings.enable_ticket_system ? 'bg-primary/20 border-primary/50' : 'bg-secondary border-border'}`}
+                                        >
+                                            <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full shadow-sm transition-all ${settings.enable_ticket_system ? 'right-0.5 bg-primary' : 'left-0.5 bg-muted-foreground'}`}></div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
-                                    <Button variant="outline" size="sm" className="border-border">Reset</Button>
-                                    <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
+                                    <Button
+                                        variant="primary"
+                                        className="gap-2 shadow-lg shadow-primary/20"
+                                        onClick={() => saveSettings(['helpdesk_email', 'contact_number', 'operating_hours', 'enable_live_chat', 'enable_ticket_system'])}
+                                        isLoading={isLoading}
+                                    >
                                         <Save size={16} /> Update Support Settings
                                     </Button>
                                 </div>
@@ -293,33 +379,34 @@ const Settings = () => {
                                     <div className="grid grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-muted-foreground uppercase">Key ID</label>
-                                            <input type="text" value="rzp_live_xxxxxxxxxxxx" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" readOnly />
+                                            <input
+                                                type="text"
+                                                value={settings.razorpay_key_id || ''}
+                                                onChange={(e) => handleSettingChange('razorpay_key_id', e.target.value)}
+                                                placeholder="rzp_live_xxxxxxxxxxxx"
+                                                className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-muted-foreground uppercase">Key Secret</label>
-                                            <input type="password" value="****************" className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none" readOnly />
+                                            <input
+                                                type="password"
+                                                value={settings.razorpay_key_secret || ''}
+                                                onChange={(e) => handleSettingChange('razorpay_key_secret', e.target.value)}
+                                                placeholder="****************"
+                                                className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
+                                            />
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-white/5 mx-[-24px]"></div>
-
-                                {/* Stripe Section */}
-                                <div className="space-y-4 opacity-50">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded bg-indigo-600/20 flex items-center justify-center text-indigo-500 font-bold text-xs border border-indigo-600/30">STR</div>
-                                            <div>
-                                                <h4 className="text-sm font-bold text-foreground">Stripe</h4>
-                                                <p className="text-[10px] text-muted-foreground">International Payments</p>
-                                            </div>
-                                        </div>
-                                        <div className="px-2 py-1 rounded bg-secondary border border-border text-muted-foreground text-[9px] uppercase font-bold tracking-wider">Inactive</div>
                                     </div>
                                 </div>
 
                                 <div className="pt-4 border-t border-white/5 flex justify-end">
-                                    <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
+                                    <Button
+                                        variant="primary"
+                                        className="gap-2 shadow-lg shadow-primary/20"
+                                        onClick={() => saveSettings(['razorpay_key_id', 'razorpay_key_secret'])}
+                                        isLoading={isLoading}
+                                    >
                                         <Save size={16} /> Save Credentials
                                     </Button>
                                 </div>
@@ -340,8 +427,11 @@ const Settings = () => {
                                             <h4 className="text-xs font-bold text-foreground uppercase">Email Alerts</h4>
                                             <p className="text-[10px] text-muted-foreground">Send transactional emails for purchases and login.</p>
                                         </div>
-                                        <div className="w-10 h-5 bg-primary/20 rounded-full relative cursor-pointer border border-primary/50 transition-colors">
-                                            <div className="absolute right-0.5 top-0.5 h-4 w-4 bg-primary rounded-full shadow-sm"></div>
+                                        <div
+                                            onClick={() => handleSettingChange('enable_email_alerts', !settings.enable_email_alerts)}
+                                            className={`w-10 h-5 rounded-full relative cursor-pointer border transition-colors ${settings.enable_email_alerts ? 'bg-primary/20 border-primary/50' : 'bg-secondary border-border'}`}
+                                        >
+                                            <div className={`absolute top-0.5 h-4 w-4 rounded-full shadow-sm transition-all ${settings.enable_email_alerts ? 'right-0.5 bg-primary' : 'left-0.5 bg-muted-foreground'}`}></div>
                                         </div>
                                     </div>
 
@@ -350,8 +440,11 @@ const Settings = () => {
                                             <h4 className="text-xs font-bold text-foreground uppercase">WhatsApp Notifications</h4>
                                             <p className="text-[10px] text-muted-foreground">Send trade signals and alerts via WhatsApp API.</p>
                                         </div>
-                                        <div className="w-10 h-5 bg-primary/20 rounded-full relative cursor-pointer border border-primary/50 transition-colors">
-                                            <div className="absolute right-0.5 top-0.5 h-4 w-4 bg-primary rounded-full shadow-sm"></div>
+                                        <div
+                                            onClick={() => handleSettingChange('enable_whatsapp_alerts', !settings.enable_whatsapp_alerts)}
+                                            className={`w-10 h-5 rounded-full relative cursor-pointer border transition-colors ${settings.enable_whatsapp_alerts ? 'bg-primary/20 border-primary/50' : 'bg-secondary border-border'}`}
+                                        >
+                                            <div className={`absolute top-0.5 h-4 w-4 rounded-full shadow-sm transition-all ${settings.enable_whatsapp_alerts ? 'right-0.5 bg-primary' : 'left-0.5 bg-muted-foreground'}`}></div>
                                         </div>
                                     </div>
 
@@ -360,14 +453,22 @@ const Settings = () => {
                                             <h4 className="text-xs font-bold text-foreground uppercase">Telegram Integration</h4>
                                             <p className="text-[10px] text-muted-foreground">Broadcast messages to Telegram Channel.</p>
                                         </div>
-                                        <div className="w-10 h-5 bg-secondary rounded-full relative cursor-pointer border border-border transition-colors">
-                                            <div className="absolute left-0.5 top-0.5 h-4 w-4 bg-muted-foreground rounded-full shadow-sm"></div>
+                                        <div
+                                            onClick={() => handleSettingChange('enable_telegram_alerts', !settings.enable_telegram_alerts)}
+                                            className={`w-10 h-5 rounded-full relative cursor-pointer border transition-colors ${settings.enable_telegram_alerts ? 'bg-primary/20 border-primary/50' : 'bg-secondary border-border'}`}
+                                        >
+                                            <div className={`absolute top-0.5 h-4 w-4 rounded-full shadow-sm transition-all ${settings.enable_telegram_alerts ? 'right-0.5 bg-primary' : 'left-0.5 bg-muted-foreground'}`}></div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="pt-4 border-t border-white/5 flex justify-end">
-                                    <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
+                                    <Button
+                                        variant="primary"
+                                        className="gap-2 shadow-lg shadow-primary/20"
+                                        onClick={() => saveSettings(['enable_email_alerts', 'enable_whatsapp_alerts', 'enable_telegram_alerts'])}
+                                        isLoading={isLoading}
+                                    >
                                         <Save size={16} /> Update Preferences
                                     </Button>
                                 </div>

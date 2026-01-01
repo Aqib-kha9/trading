@@ -1,12 +1,37 @@
 import React, { useState } from 'react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { ArrowLeft, Save, HelpCircle, FileText } from 'lucide-react';
+import { ArrowLeft, Save, HelpCircle, FileText, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import useToast from '../../hooks/useToast';
+import { createFAQ } from '../../api/cms.api';
 
 const CreateFAQ = () => {
     const navigate = useNavigate();
+    const toast = useToast();
     const [category, setCategory] = useState('General');
+    const [question, setQuestion] = useState('');
+    const [answer, setAnswer] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        if (!question.trim() || !answer.trim()) {
+            toast.error('Please fill in all fields');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await createFAQ({ question, answer, category });
+            toast.success('FAQ created successfully');
+            navigate('/cms'); // Go back to list
+        } catch (error) {
+            console.error('Failed to create FAQ', error);
+            toast.error('Failed to create FAQ');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -36,6 +61,8 @@ const CreateFAQ = () => {
                             <label className="text-xs font-bold text-muted-foreground uppercase">Question</label>
                             <input
                                 type="text"
+                                value={question}
+                                onChange={(e) => setQuestion(e.target.value)}
                                 placeholder="e.g., How do I reset my password?"
                                 className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-2.5 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none"
                             />
@@ -49,8 +76,8 @@ const CreateFAQ = () => {
                                         key={c}
                                         onClick={() => setCategory(c)}
                                         className={`flex-1 py-2 px-2 rounded-md border text-[10px] font-bold uppercase tracking-wide transition-all ${category === c
-                                                ? 'border-primary bg-primary/10 text-primary'
-                                                : 'border-border bg-secondary/10 text-muted-foreground hover:bg-secondary/30'
+                                            ? 'border-primary bg-primary/10 text-primary'
+                                            : 'border-border bg-secondary/10 text-muted-foreground hover:bg-secondary/30'
                                             }`}
                                     >
                                         {c}
@@ -62,6 +89,8 @@ const CreateFAQ = () => {
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-muted-foreground uppercase">Answer</label>
                             <textarea
+                                value={answer}
+                                onChange={(e) => setAnswer(e.target.value)}
                                 rows={6}
                                 placeholder="Provide a detailed answer..."
                                 className="w-full bg-secondary/20 border border-border rounded-lg px-4 py-3 text-xs font-mono text-foreground focus:border-primary/50 focus:outline-none resize-none leading-relaxed"
@@ -70,8 +99,14 @@ const CreateFAQ = () => {
                         </div>
 
                         <div className="pt-4 border-t border-white/5 flex items-center justify-end">
-                            <Button variant="primary" className="gap-2 shadow-lg shadow-primary/20">
-                                <Save size={16} /> Publish FAQ
+                            <Button
+                                variant="primary"
+                                className="gap-2 shadow-lg shadow-primary/20"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                Publish FAQ
                             </Button>
                         </div>
                     </div>

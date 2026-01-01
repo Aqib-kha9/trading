@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard, Users, CreditCard,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { getSystemHealth } from '../../api/system.api';
 
 const SidebarItem = ({ icon: Icon, label, to, collapsed }) => (
     <NavLink
@@ -80,6 +81,22 @@ const SidebarGroup = ({ icon: Icon, label, children, collapsed }) => {
 
 const Sidebar = ({ isOpen, onClose }) => {
     const [collapsed, setCollapsed] = useState(false);
+    const [systemHealth, setSystemHealth] = useState({ serverLoad: 0, memoryUsage: 0 });
+
+    useEffect(() => {
+        const fetchHealth = async () => {
+            try {
+                const data = await getSystemHealth();
+                setSystemHealth(data);
+            } catch (error) {
+                console.error("Failed to fetch system health", error);
+            }
+        };
+
+        fetchHealth();
+        const interval = setInterval(fetchHealth, 30000); // Update every 30s
+        return () => clearInterval(interval);
+    }, []);
 
     const navigation = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -108,7 +125,14 @@ const Sidebar = ({ isOpen, onClose }) => {
         },
         { name: 'CMS', path: '/cms/all', icon: FileText },
         { name: 'Sub Brokers', path: '/brokers/all', icon: Users }, // Reusing Users icon or similar
-        { name: 'Settings', path: '/settings/all', icon: Settings },
+        {
+            name: 'Settings',
+            icon: Settings,
+            submenu: [
+                { name: 'General', path: '/settings/all', icon: Settings },
+                { name: 'Notifications', path: '/settings/notifications', icon: MessageSquare }
+            ]
+        },
     ];
 
     return (
@@ -216,10 +240,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                                             <Cpu size={10} />
                                             <span>Server Load</span>
                                         </div>
-                                        <span className="text-xs font-mono text-white">42%</span>
+                                        <span className="text-xs font-mono text-white">{systemHealth.serverLoad}%</span>
                                     </div>
                                     <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                                        <div className="h-full bg-gradient-to-r from-primary to-emerald-500 w-[42%] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]"></div>
+                                        <div
+                                            className="h-full bg-gradient-to-r from-primary to-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)] transition-all duration-1000 ease-out"
+                                            style={{ width: `${Math.min(systemHealth.serverLoad, 100)}%` }}
+                                        ></div>
                                     </div>
                                 </div>
                             </div>

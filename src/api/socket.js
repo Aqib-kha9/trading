@@ -2,12 +2,11 @@ import { io } from 'socket.io-client';
 
 const URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+const token = localStorage.getItem('token');
+
 export const socket = io(URL, {
   autoConnect: true,
-  query: {
-    // Pass token if auth is required
-    token: localStorage.getItem('token') 
-  }
+  query: token && token !== 'null' ? { token } : {}
 });
 
 socket.on('connect', () => {

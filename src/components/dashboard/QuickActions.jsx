@@ -1,16 +1,19 @@
 import React from 'react';
 import { UserPlus, Send, Settings, AlertTriangle, ShieldAlert, BadgePlus } from 'lucide-react';
 
+import { useNavigate } from 'react-router-dom';
+
 const ACTION_BUTTONS = [
-    { icon: UserPlus, label: 'Add User', color: 'hover:bg-blue-500/20 hover:text-blue-500 hover:border-blue-500/30' },
-    { icon: BadgePlus, label: 'New Plan', color: 'hover:bg-amber-500/20 hover:text-amber-500 hover:border-amber-500/30' },
-    { icon: Send, label: 'Broadcast', color: 'hover:bg-emerald-500/20 hover:text-emerald-500 hover:border-emerald-500/30' },
-    { icon: ShieldAlert, label: 'Audit Log', color: 'hover:bg-purple-500/20 hover:text-purple-500 hover:border-purple-500/30' },
-    { icon: AlertTriangle, label: 'Sys Freeze', color: 'hover:bg-red-500/20 hover:text-red-500 hover:border-red-500/30' },
-    { icon: Settings, label: 'Config', color: 'hover:bg-white/10 hover:text-white hover:border-white/20' },
+    { icon: UserPlus, label: 'Add User', color: 'hover:bg-blue-500/20 hover:text-blue-500 hover:border-blue-500/30', path: '/users/create' },
+    { icon: BadgePlus, label: 'New Plan', color: 'hover:bg-amber-500/20 hover:text-amber-500 hover:border-amber-500/30', path: '/plans/create' },
+    { icon: Send, label: 'Broadcast', color: 'hover:bg-emerald-500/20 hover:text-emerald-500 hover:border-emerald-500/30', path: '/announcements/create' },
+    { icon: ShieldAlert, label: 'Audit Log', color: 'hover:bg-purple-500/20 hover:text-purple-500 hover:border-purple-500/30', path: '/reports/all' },
+    { icon: AlertTriangle, label: 'Sys Freeze', color: 'hover:bg-red-500/20 hover:text-red-500 hover:border-red-500/30', path: '/settings/all' }, // Redirect to settings for now
+    { icon: Settings, label: 'Config', color: 'hover:bg-white/10 hover:text-white hover:border-white/20', path: '/settings/all' },
 ];
 
 const QuickActions = () => {
+    const navigate = useNavigate();
     return (
         <div className="bg-background/50 border border-white/5 rounded-xl shadow-xl flex flex-col overflow-hidden h-full relative group hover:border-primary/50 transition-all duration-500">
             {/* Cyber Grid Background */}
@@ -25,6 +28,7 @@ const QuickActions = () => {
                 {ACTION_BUTTONS.map((btn, idx) => (
                     <button
                         key={idx}
+                        onClick={() => navigate(btn.path)}
                         className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border border-transparent bg-white/[0.03] transition-all duration-200 group ${btn.color}`}
                     >
                         <btn.icon size={16} className="text-muted-foreground group-hover:scale-110 transition-transform" />

@@ -5,7 +5,7 @@ import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react';
 
-const VisualStatCard = ({ title, value, change, type = 'area', data, color = '#f59e0b', subtext }) => {
+const VisualStatCard = ({ title, value, change, type = 'area', data, color = '#f59e0b', subtext, onClick }) => {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
 
@@ -13,12 +13,18 @@ const VisualStatCard = ({ title, value, change, type = 'area', data, color = '#f
     const chartColor = color;
 
     const renderChart = () => {
+        // Ensure data exists and map 'v' to 'value' if needed for backward compatibility or just use 'value'
+        // The API returns 'value'. The mock data below now uses 'value'.
+        const chartData = data || [
+            { value: 10 }, { value: 20 }, { value: 35 }, { value: 25 }, { value: 40 }, { value: 15 }, { value: 30 }, { value: 20 }, { value: 45 }
+        ];
+
         switch (type) {
             case 'bar':
                 return (
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data || [{ v: 10 }, { v: 20 }, { v: 35 }, { v: 25 }, { v: 40 }, { v: 15 }, { v: 30 }, { v: 20 }, { v: 45 }]}>
-                            <Bar dataKey="v" fill={chartColor} radius={[1, 1, 0, 0]} opacity={0.6} />
+                        <BarChart data={chartData}>
+                            <Bar dataKey="value" fill={chartColor} radius={[1, 1, 0, 0]} opacity={0.6} />
                         </BarChart>
                     </ResponsiveContainer>
                 );
@@ -35,14 +41,14 @@ const VisualStatCard = ({ title, value, change, type = 'area', data, color = '#f
             default:
                 return (
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data || [{ v: 10 }, { v: 25 }, { v: 15 }, { v: 30 }, { v: 12 }, { v: 40 }, { v: 28 }, { v: 50 }]}>
+                        <AreaChart data={chartData}>
                             <defs>
                                 <linearGradient id={`grad-${title}`} x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={chartColor} stopOpacity={0.4} />
                                     <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <Area type="monotone" dataKey="v" stroke={chartColor} strokeWidth={2} fill={`url(#grad-${title})`} />
+                            <Area type="monotone" dataKey="value" stroke={chartColor} strokeWidth={2} fill={`url(#grad-${title})`} />
                         </AreaChart>
                     </ResponsiveContainer>
                 );
@@ -52,7 +58,11 @@ const VisualStatCard = ({ title, value, change, type = 'area', data, color = '#f
     const isPositive = !change.startsWith('-');
 
     return (
-        <Card className="h-full relative overflow-hidden group hover:border-primary/50 transition-all duration-500 bg-background/50" noPadding>
+        <Card
+            className={`h-full relative overflow-hidden group hover:border-primary/50 transition-all duration-500 bg-background/50 ${onClick ? 'cursor-pointer' : ''}`}
+            noPadding
+            onClick={onClick}
+        >
             {/* Cyber Grid Background */}
             <div className="absolute inset-0 bg-cyber-grid opacity-20 pointer-events-none"></div>
 
@@ -87,7 +97,8 @@ const VisualStatCard = ({ title, value, change, type = 'area', data, color = '#f
             </div>
 
             {/* Visual Background / Sparkline */}
-            <div className={`absolute bottom-0 right-0 z-0 opacity-30 transition-opacity group-hover:opacity-50 ${type === 'radial' ? 'w-16 h-16 right-1 top-1' : 'w-full h-16 bottom-0'}`}>
+            {/* Fixed positioning for radial chart to be bottom-right instead of top-right to avoid overlap */}
+            <div className={`absolute bottom-0 right-0 z-0 opacity-30 transition-opacity group-hover:opacity-50 ${type === 'radial' ? 'w-16 h-16 right-1 bottom-1' : 'w-full h-16 bottom-0'}`}>
                 {renderChart()}
             </div>
 

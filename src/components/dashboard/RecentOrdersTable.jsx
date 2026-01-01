@@ -1,13 +1,8 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const RECENT_ORDERS = [
-    { id: 'ORD-001', user: 'Rajesh Kumar', plan: 'Gold Plan', amount: '₹ 5,000', status: 'Success', date: '12 Dec, 10:30 AM' },
-    { id: 'ORD-002', user: 'Amit Singh', plan: 'Silver Plan', amount: '₹ 2,000', status: 'Pending', date: '12 Dec, 09:15 AM' },
-    { id: 'ORD-003', user: 'Sneha Gupta', plan: 'Platinum', amount: '₹ 10,000', status: 'Success', date: '11 Dec, 04:45 PM' },
-    { id: 'ORD-004', user: 'Vikram M.', plan: 'Gold Plan', amount: '₹ 5,000', status: 'Failed', date: '11 Dec, 02:20 PM' },
-    { id: 'ORD-005', user: 'Priya Sharma', plan: 'Silver Plan', amount: '₹ 2,000', status: 'Success', date: '10 Dec, 11:00 AM' },
-];
+
 
 const StatusBadge = ({ status }) => {
     const styles = {
@@ -22,7 +17,7 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const RecentOrdersTable = () => {
+const RecentOrdersTable = ({ orders = [] }) => {
     return (
         <div className="h-full bg-background/50 border border-white/5 rounded-xl shadow-xl flex flex-col overflow-hidden relative group hover:border-primary/50 transition-all duration-500">
             {/* Cyber Grid Background */}
@@ -32,7 +27,7 @@ const RecentOrdersTable = () => {
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <div className="h-10 shrink-0 border-b border-white/5 px-4 flex items-center justify-between bg-white/[0.02]">
                 <h3 className="text-xs font-bold text-white/90 uppercase tracking-widest">Recent Transactions</h3>
-                <button className="text-[10px] text-primary hover:underline flex items-center gap-1">View All <ArrowRight size={10} /></button>
+                <Link to="/subscriptions/all" className="text-[10px] text-primary hover:underline flex items-center gap-1">View All <ArrowRight size={10} /></Link>
             </div>
 
             <div className="flex-1 overflow-auto">
@@ -48,7 +43,7 @@ const RecentOrdersTable = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                        {RECENT_ORDERS.map((order) => (
+                        {orders.length > 0 ? orders.map((order) => (
                             <tr key={order.id} className="hover:bg-white/[0.02] transition-colors group">
                                 <td className="px-4 py-2.5 text-[11px] font-mono text-muted-foreground group-hover:text-primary transition-colors">{order.id}</td>
                                 <td className="px-4 py-2.5 text-xs font-medium text-white/90">{order.user}</td>
@@ -57,7 +52,11 @@ const RecentOrdersTable = () => {
                                 <td className="px-4 py-2.5"><StatusBadge status={order.status} /></td>
                                 <td className="px-4 py-2.5 text-[10px] text-muted-foreground text-right">{order.date}</td>
                             </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan="6" className="px-4 py-8 text-center text-xs text-muted-foreground">No recent orders found.</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

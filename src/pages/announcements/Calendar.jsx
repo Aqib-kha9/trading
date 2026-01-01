@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     Calendar as CalendarIcon, Filter, Check,
     TrendingUp, TrendingDown, AlignLeft,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { fetchCalendarEvents } from '../../api/economic.api';
 
 // --- Constants & Config ---
 
@@ -39,137 +40,7 @@ const EVENT_TYPES = [
 // --- Mock Data with ISO Dates ---
 // Mock Context: Today is 2025-12-15 (Monday)
 
-const MOCK_EVENTS = [
-    // Yesterday: Sun Dec 14
-    {
-        id: 101, dateIso: '2025-12-14', time: '10:00', currency: 'CNY', impact: 'low',
-        event: 'FDI y/y', actual: '-1.4%', forecast: '', previous: '-0.3%',
-        graphData: [-0.5, -0.8, -0.3, -1.4, -1.0, -1.2]
-    },
-
-    // Today: Mon Dec 15
-    {
-        id: 1, dateIso: '2025-12-15', time: '14:02', currency: 'NZD', impact: 'low',
-        event: 'FPI m/m', detail: 'Food Price Index',
-        actual: '-0.4%', forecast: '-0.3%', previous: '-0.3%',
-        graphData: [0.5, 1.2, 0.7, 0.3, -0.4, -0.3],
-        specs: {
-            source: { name: 'Statistics New Zealand', url: '#' },
-            measures: 'Change in the price of food and food services purchased by households;',
-            effect: "'Actual' greater than 'Forecast' is good for currency;",
-            frequency: 'Released monthly, about 13 days after the month ends;',
-            nextRelease: 'Jan 16, 2026',
-            whyCare: 'Although food is among the most volatile consumer price components, this indicator garners some attention because New Zealand\'s major inflation data is released on a quarterly basis;',
-            acronym: 'Food Price Index (FPI);'
-        },
-        history: [
-            { date: 'Nov 17, 2025', actual: '-0.3%', forecast: '-0.4%', previous: '0.5%' },
-            { date: 'Oct 16, 2025', actual: '-0.4%', forecast: '0.3%', previous: '0.7%' },
-            { date: 'Sep 16, 2025', actual: '0.3%', forecast: '0.7%', previous: '1.2%' },
-            { date: 'Aug 15, 2025', actual: '0.7%', forecast: '1.2%', previous: '0.5%' },
-            { date: 'Jul 17, 2025', actual: '1.2%', forecast: '0.5%', previous: '0.2%' }
-        ],
-        stories: [
-            { title: 'NZ selected price indexes: November 2025', source: 'stats.govt.nz', time: '14 hr ago', desc: 'Selected price indexes (SPI) provide monthly price changes for a selection of goods and services that New Zealand households...' }
-        ]
-    },
-    {
-        id: 2, dateIso: '2025-12-15', time: '15:20', currency: 'JPY', impact: 'low',
-        event: 'Tankan Manufacturing Index', detail: 'Survey of manufacturing sentiment',
-        actual: '15', forecast: '15', previous: '14',
-        graphData: [12, 13, 14, 15, 14.5, 15],
-        specs: {
-            source: { name: 'Bank of Japan', url: '#' },
-            measures: 'Level of a diffusion index based on surveyed manufacturers;',
-            effect: "'Actual' greater than 'Forecast' is good for currency;",
-            frequency: 'Released quarterly, about 14 days before the quarter ends;',
-            whyCare: 'It\'s a leading indicator of economic health because businesses react quickly to market conditions, and their purchasing managers hold perhaps the most current and relevant insight into the company\'s view of the economy;',
-        },
-        history: [],
-        stories: []
-    },
-    {
-        id: 3, dateIso: '2025-12-15', time: '15:20', currency: 'JPY', impact: 'medium',
-        event: 'Tankan Non-Manufacturing Index', detail: 'Service sector sentiment',
-        actual: '34', forecast: '35', previous: '34',
-        graphData: [32, 33, 34, 34, 35, 34]
-    },
-    {
-        id: 4, dateIso: '2025-12-15', time: '17:00', currency: 'CNY', impact: 'medium',
-        event: 'Industrial Production y/y', detail: 'Measures change in output of factories',
-        actual: '4.8%', forecast: '5.0%', previous: '4.9%',
-        isHot: true,
-        graphData: [4.5, 4.6, 4.9, 4.8, 5.1, 4.8],
-        specs: {
-            source: { name: 'National Bureau of Statistics of China', url: '#' },
-            measures: 'Change in the total inflation-adjusted value of output produced by manufacturers, mines, and utilities;',
-            effect: "'Actual' greater than 'Forecast' is good for currency;",
-            frequency: 'Released monthly, about 15 days after the month ends;',
-            whyCare: 'It\'s a leading indicator of economic health - production is the dominant driver of the economy and reacts quickly to ups and downs in the business cycle;',
-        },
-        history: [],
-        stories: []
-    },
-    {
-        id: 5, dateIso: '2025-12-15', time: '17:00', currency: 'CNY', impact: 'high',
-        event: 'Retail Sales y/y', detail: 'Primary gauge of consumer spending',
-        actual: '1.3%', forecast: '3.0%', previous: '2.9%',
-        impactType: 'negative',
-        graphData: [2.5, 2.8, 2.9, 1.3, 3.1, 1.5],
-        specs: {
-            source: { name: 'National Bureau of Statistics of China', url: '#' },
-            measures: 'Change in the total value of sales at the retail level;',
-            effect: "'Actual' greater than 'Forecast' is good for currency;",
-            frequency: 'Released monthly, about 15 days after the month ends;',
-            whyCare: 'It\'s the primary gauge of consumer spending, which accounts for the majority of overall economic activity;',
-        },
-        history: [],
-        stories: []
-    },
-    {
-        id: 8, dateIso: '2025-12-15', time: '19:30', currency: 'USD', impact: 'high',
-        event: 'Core CPI m/m', detail: 'The big one - Excludes food and energy',
-        actual: '', forecast: '0.3%', previous: '0.2%', pending: true,
-        graphData: [0.3, 0.4, 0.2, 0.3, 0.2, 0.3],
-        specs: {
-            source: { name: 'Bureau of Labor Statistics', url: '#' },
-            measures: 'Change in the price of goods and services purchased by consumers, excluding food and energy;',
-            effect: "'Actual' greater than 'Forecast' is good for currency;",
-            frequency: 'Released monthly, about 16 days after the month ends;',
-            nextRelease: 'Jan 13, 2026',
-            whyCare: 'Consumer prices account for a majority of overall inflation. Inflation is important to currency valuation because rising prices lead the central bank to raise interest rates out of respect for their inflation containment mandate;',
-            acronym: 'Consumer Price Index (CPI);'
-        },
-        history: [
-            { date: 'Nov 14, 2025', actual: '0.3%', forecast: '0.3%', previous: '0.2%' },
-            { date: 'Oct 12, 2025', actual: '0.2%', forecast: '0.2%', previous: '0.3%' },
-            { date: 'Sep 14, 2025', actual: '0.3%', forecast: '0.3%', previous: '0.2%' },
-        ],
-        stories: []
-    },
-
-    // Tomorrow: Tue Dec 16
-    {
-        id: 9, dateIso: '2025-12-16', time: '00:30', currency: 'AUD', impact: 'high',
-        event: 'Monetary Policy Meeting Minutes', detail: 'RBA Meeting details',
-        actual: '', forecast: '', previous: '', pending: true,
-        graphData: null
-    },
-    {
-        id: 10, dateIso: '2025-12-16', time: '12:30', currency: 'GBP', impact: 'medium',
-        event: 'Average Earnings Index 3m/y', detail: 'Wage inflation indicator',
-        actual: '', forecast: '7.7%', previous: '7.9%', pending: true,
-        graphData: null
-    },
-
-    // Next Week: Dec 23 (Mock)
-    {
-        id: 201, dateIso: '2025-12-23', time: '19:00', currency: 'USD', impact: 'high',
-        event: 'Final GDP q/q', detail: 'Economic growth quarter over quarter',
-        actual: '', forecast: '5.2%', previous: '5.2%', pending: true,
-        graphData: null
-    },
-];
+// Mock Data removed - using real API data
 
 // --- Detail Panel Component ---
 
@@ -606,6 +477,77 @@ const CalendarPage = () => {
         setExpandedId(prev => prev === id ? null : id);
     };
 
+    const [events, setEvents] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Fetch Data
+    useEffect(() => {
+        fetchEvents();
+    }, [selectedDateRange]);
+
+    const fetchEvents = async () => {
+        setIsLoading(true);
+        try {
+            // Calculate date range based on selectedDateRange.id
+            const today = new Date();
+            let from = new Date();
+            let to = new Date();
+
+            switch (selectedDateRange.id) {
+                case 'today':
+                    break; // from/to are today
+                case 'tomorrow':
+                    from.setDate(today.getDate() + 1);
+                    to.setDate(today.getDate() + 1);
+                    break;
+                case 'thisWeek':
+                    // Mock logic for week boundaries (Monday start)
+                    const day = today.getDay();
+                    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+                    from.setDate(diff);
+                    to.setDate(diff + 6);
+                    break;
+                default:
+                    // Default to this week
+                    const d = today.getDay();
+                    const df = today.getDate() - d + (d === 0 ? -6 : 1);
+                    from.setDate(df);
+                    to.setDate(df + 6);
+                    break;
+            }
+
+            const fromStr = from.toISOString().split('T')[0];
+            const toStr = to.toISOString().split('T')[0];
+
+            const response = await fetchCalendarEvents({ from: fromStr, to: toStr });
+
+            // Augment data with UI-specific mock details if missing
+            const augmentedData = response.data.map(evt => ({
+                ...evt,
+                id: evt._id, // Ensure ID is present for key and expansion logic
+                // Ensure date is ISO string for frontend logic
+                dateIso: evt.date,
+                // Generate mock history/specs if missing (for UI demo)
+                specs: evt.specs || {
+                    source: { name: 'Financial Source', url: '#' },
+                    measures: `Measures the ${evt.event} impact on ${evt.currency} economy.`,
+                    frequency: 'Released periodically',
+                    whyCare: 'Significant indicator of economic health and currency valuation.'
+                },
+                history: evt.history || [
+                    { date: 'Previous', actual: evt.previous || '-', forecast: '-', previous: '-' }
+                ]
+            }));
+
+            setEvents(augmentedData);
+        } catch (error) {
+            console.error("Failed to fetch calendar events", error);
+            // toast.error("Failed to load calendar data");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // Helper to format date header
     const formatDate = (dateIso) => {
         const d = new Date(dateIso);
@@ -614,40 +556,38 @@ const CalendarPage = () => {
 
     // Data Filtering Logic
     const filteredEvents = useMemo(() => {
-        return MOCK_EVENTS.filter(e => {
+        return events.filter(e => {
             // 1. Text Search
             const matchesSearch = searchTerm === '' ||
                 e.event.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                e.currency.toLowerCase().includes(searchTerm.toLowerCase());
+                (e.country && e.country.toLowerCase().includes(searchTerm.toLowerCase()));
 
             // 2. Filters
-            const matchesImpact = selectedImpacts.includes(e.impact);
-            const matchesCurrency = selectedCurrencies.includes(e.currency);
+            // Map backend impact/country to filters if needed.
+            // Backend impact: High, Medium, Low, None. Frontend IDs: high, medium, low, none.
+            const impactLower = e.impact ? e.impact.toLowerCase() : 'none';
+            const matchesImpact = selectedImpacts.includes(impactLower);
 
-            // 3. Date Filter (Mock Logic)
-            let matchesDate = false;
-            const d = e.dateIso;
-            switch (selectedDateRange.id) {
-                case 'today': matchesDate = (d === '2025-12-15'); break;
-                case 'tomorrow': matchesDate = (d === '2025-12-16'); break;
-                case 'yesterday': matchesDate = (d === '2025-12-14'); break;
-                case 'thisWeek': matchesDate = (d >= '2025-12-15' && d <= '2025-12-21'); break;
-                case 'nextWeek': matchesDate = (d >= '2025-12-22' && d <= '2025-12-28'); break;
-                case 'lastWeek': matchesDate = (d >= '2025-12-08' && d <= '2025-12-14'); break;
-                case 'month': matchesDate = d.startsWith('2025-12'); break;
-                default: matchesDate = true;
-            }
+            const currency = e.currency || e.country || 'USD'; // Fallback
+            const matchesCurrency = selectedCurrencies.includes(currency);
 
-            return matchesSearch && matchesImpact && matchesCurrency && matchesDate;
-        }).sort((a, b) => a.dateIso.localeCompare(b.dateIso) || a.time.localeCompare(b.time)); // Sort by Date then Time
-    }, [searchTerm, selectedImpacts, selectedCurrencies, selectedDateRange]);
+            return matchesSearch && matchesImpact && matchesCurrency;
+        }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [searchTerm, selectedImpacts, selectedCurrencies, events]);
 
     // Grouping by Date for headers
     const groupedEvents = useMemo(() => {
         const groups = {};
         filteredEvents.forEach(event => {
-            if (!groups[event.dateIso]) groups[event.dateIso] = [];
-            groups[event.dateIso].push(event);
+            // Backend date is full ISO string. Extract YYYY-MM-DD for grouping key.
+            const dateKey = new Date(event.date).toISOString().split('T')[0];
+            if (!groups[dateKey]) groups[dateKey] = [];
+
+            // Augment event with display time
+            const d = new Date(event.date);
+            const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+            groups[dateKey].push({ ...event, time: timeStr, dateIso: dateKey });
         });
         return groups;
     }, [filteredEvents]);

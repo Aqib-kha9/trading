@@ -52,7 +52,9 @@ import TicketDetails from '../pages/tickets/TicketDetails';
 import { ReplyTicket } from '../pages/tickets/TicketPages'; // Keep others if needed
 
 // Settings
+// Settings
 import Settings from '../pages/settings/Settings';
+import NotificationTemplates from '../pages/settings/NotificationTemplates';
 
 // CMS
 import CMS from '../pages/cms/CMS';
@@ -71,6 +73,7 @@ import Reports from '../pages/reports/Reports';
 import AllBrokers from '../pages/brokers/AllBrokers';
 import AddBroker from '../pages/brokers/AddBroker';
 import BrokerDetails from '../pages/brokers/BrokerDetails';
+import EditBroker from '../pages/brokers/EditBroker';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated } = useSelector((state) => state.auth);
@@ -146,6 +149,7 @@ const AppRouter = () => {
 
                     {/* Settings */}
                     <Route path="settings/all" element={<Settings />} />
+                    <Route path="settings/notifications" element={<NotificationTemplates />} />
 
                     {/* CMS */}
                     <Route path="cms/all" element={<CMS />} />
@@ -154,6 +158,7 @@ const AppRouter = () => {
                     {/* Announcements */}
                     <Route path="announcements/all" element={<AllAnnouncements />} />
                     <Route path="announcements/create" element={<CreateAnnouncement />} />
+                    <Route path="announcements/edit/:id" element={<CreateAnnouncement />} />
                     <Route path="announcements/calendar" element={<Calendar />} />
 
                     {/* Reports */}
@@ -163,6 +168,7 @@ const AppRouter = () => {
                     <Route path="brokers/all" element={<AllBrokers />} />
                     <Route path="brokers/add" element={<AddBroker />} />
                     <Route path="brokers/details" element={<BrokerDetails />} />
+                    <Route path="brokers/edit" element={<EditBroker />} />
 
                     <Route path="*" element={<div className="text-white p-6">Page Not Found</div>} />
                 </Route>

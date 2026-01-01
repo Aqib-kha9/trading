@@ -1,62 +1,109 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Save, X, Briefcase, MapPin, DollarSign, Percent } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Save, X, Briefcase, MapPin, DollarSign, Percent, Loader } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import useToast from '../../hooks/useToast';
-import { createSubBroker } from '../../api/subbrokers.api';
+import { getSubBroker, updateSubBroker } from '../../api/subbrokers.api';
 import { useForm } from 'react-hook-form';
 
-const AddBroker = () => {
+const EditBroker = () => {
     const navigate = useNavigate();
     const toast = useToast();
+    const [searchParams] = useSearchParams();
+    const brokerID = searchParams.get('id');
+
+    const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Using defaultValues to Initialize form
-    const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
         defaultValues: {
             commissionType: 'PERCENTAGE',
-            commissionValue: 20
+            commissionValue: 20,
+            status: 'Active'
         }
     });
 
     const commissionType = watch('commissionType');
 
+    useEffect(() => {
+        if (!brokerID) {
+            toast.error("Invalid Broker ID");
+            navigate('/brokers/all');
+            return;
+        }
+
+        const fetchDetails = async () => {
+            try {
+                const { data } = await getSubBroker(brokerID);
+                const broker = data.subBroker;
+
+                // Reset form with fetched values
+                reset({
+                    name: broker.name,
+                    email: broker.email,
+                    phone: broker.phone,
+                    company: broker.company,
+                    location: broker.location,
+                    commissionType: broker.commission?.type || 'PERCENTAGE',
+                    commissionValue: broker.commission?.value || 0,
+                    status: broker.status
+                });
+            } catch (error) {
+                console.error("Failed to fetch broker", error);
+                toast.error("Failed to load broker details");
+                navigate('/brokers/all');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchDetails();
+    }, [brokerID, navigate, reset, toast]);
+
     const onSubmit = async (data) => {
         setIsSubmitting(true);
 
-        const finalData = {
+        const updatePayload = {
             name: data.name,
             email: data.email,
             phone: data.phone,
             company: data.company,
             location: data.location,
-            // Robust ID generation: SB-[timestamp_chunk][random_3_digit]
-            brokerId: `SB-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`,
             commission: {
                 type: data.commissionType,
                 value: Number(data.commissionValue)
-            }
+            },
+            status: data.status
         };
 
         try {
-            await createSubBroker(finalData);
-            toast.success('Partner onboarded successfully');
+            await updateSubBroker(brokerID, updatePayload);
+            toast.success('Partner profile updated');
             navigate('/brokers/all');
         } catch (error) {
-            console.error("Failed to create sub broker", error);
-            const msg = error.response?.data?.message || 'Failed to onboard broker';
+            console.error("Update failed", error);
+            const msg = error.response?.data?.message || 'Failed to update';
             toast.error(msg);
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground animate-pulse">
+                <Loader className="animate-spin mb-2" size={32} />
+                <span className="text-xs font-mono uppercase tracking-widest">Loading Profile...</span>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-foreground">Onboard New Partner</h1>
+                <h1 className="text-2xl font-bold text-foreground">Edit Partner Profile</h1>
                 <Button variant="outline" onClick={() => navigate('/brokers/all')} className="gap-2">
                     <X size={16} /> Cancel
                 </Button>
@@ -72,32 +119,37 @@ const AddBroker = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                             label="Partner Name"
-                            placeholder="e.g. Rahul Verma"
                             {...register("name", { required: "Name is required" })}
                             error={errors.name?.message}
                         />
                         <Input
                             label="Company Name"
-                            placeholder="e.g. Verma Financials"
                             {...register("company")}
                         />
                         <Input
                             label="Email Address"
-                            placeholder="partner@example.com"
                             {...register("email", { required: "Email is required" })}
                             error={errors.email?.message}
                         />
                         <Input
                             label="Phone Number"
-                            placeholder="+91 9876543210"
                             {...register("phone", { required: "Phone is required" })}
                             error={errors.phone?.message}
                         />
                         <Input
                             label="Location / City"
-                            placeholder="e.g. Mumbai"
                             {...register("location")}
                         />
+                        <div className="space-y-1.5">
+                            <label className="block text-sm font-medium text-muted-foreground ml-1">Account Status</label>
+                            <select
+                                {...register("status")}
+                                className="w-full bg-secondary/30 border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 hover:bg-secondary/50 transition-all text-sm"
+                            >
+                                <option value="Active">Active</option>
+                                <option value="Blocked">Blocked</option>
+                            </select>
+                        </div>
                     </div>
                 </Card>
 
@@ -112,7 +164,7 @@ const AddBroker = () => {
                             <label className="block text-sm font-medium text-muted-foreground ml-1">Commission Type</label>
                             <select
                                 {...register("commissionType")}
-                                className="w-full bg-secondary/30 border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 hover:bg-secondary/50 transition-all"
+                                className="w-full bg-secondary/30 border border-input rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 hover:bg-secondary/50 transition-all text-sm"
                             >
                                 <option value="PERCENTAGE">Percentage (%) Share</option>
                                 <option value="FIXED">Fixed Amount (₹)</option>
@@ -123,7 +175,6 @@ const AddBroker = () => {
                             <Input
                                 label={commissionType === 'PERCENTAGE' ? "Commission Percentage (%)" : "Fixed Amount (₹)"}
                                 type="number"
-                                placeholder={commissionType === 'PERCENTAGE' ? "e.g. 20" : "e.g. 500"}
                                 {...register("commissionValue", { required: "Value is required", min: 0 })}
                                 error={errors.commissionValue?.message}
                             />
@@ -141,7 +192,7 @@ const AddBroker = () => {
                     </Button>
                     <Button variant="primary" type="submit" disabled={isSubmitting} className="min-w-[120px] gap-2">
                         <Save size={16} />
-                        {isSubmitting ? 'Onboarding...' : 'Onboard Partner'}
+                        {isSubmitting ? 'Updating...' : 'Update Profile'}
                     </Button>
                 </div>
             </form>
@@ -149,4 +200,4 @@ const AddBroker = () => {
     );
 };
 
-export default AddBroker;
+export default EditBroker;

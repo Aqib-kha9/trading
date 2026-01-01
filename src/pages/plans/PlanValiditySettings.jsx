@@ -9,8 +9,7 @@ const PlanValiditySettings = ({ isEmbedded = false }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [settings, setSettings] = useState({
-        gracePeriod: 24,
-        reminderDays: 3
+        preExpiryDays: 3
     });
 
     useEffect(() => {
@@ -19,11 +18,14 @@ const PlanValiditySettings = ({ isEmbedded = false }) => {
                 const { getSetting } = await import('../../api/settings.api');
                 const { data } = await getSetting('planValidity');
                 if (data && data.value) {
-                    setSettings(data.value);
+                    // Migration or mapping if needed, otherwise direct set
+                    const val = data.value;
+                    setSettings({
+                        preExpiryDays: val.preExpiryDays || val.reminderDays || 3
+                    });
                 }
             } catch (error) {
                 console.error("Failed to load settings", error);
-                // Silent fail or toast? keeping silent for default values fallback
             } finally {
                 setIsLoading(false);
             }
@@ -69,31 +71,19 @@ const PlanValiditySettings = ({ isEmbedded = false }) => {
             {!isEmbedded && (
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Validity Global Settings</h1>
-                    <p className="text-muted-foreground text-sm">Configure grace periods and expiration alerts</p>
+                    <p className="text-muted-foreground text-sm">Configure expiration alerts</p>
                 </div>
             )}
 
             <Card className="terminal-panel bg-card border-border" noPadding={isEmbedded}>
                 <div className="space-y-6 p-6">
                     <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Grace Period (Hours)</label>
-                        <p className="text-xs text-muted-foreground mb-2">Time allowed after expiry before service cuts off</p>
-                        <input
-                            name="gracePeriod"
-                            type="number"
-                            value={settings.gracePeriod}
-                            onChange={handleChange}
-                            className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary/50 focus:outline-none transition-colors"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pre-Expiry Reminder (Days)</label>
                         <p className="text-xs text-muted-foreground mb-2">When to start sending renewal notifications</p>
                         <input
-                            name="reminderDays"
+                            name="preExpiryDays"
                             type="number"
-                            value={settings.reminderDays}
+                            value={settings.preExpiryDays}
                             onChange={handleChange}
                             className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-sm focus:border-primary/50 focus:outline-none transition-colors"
                         />
